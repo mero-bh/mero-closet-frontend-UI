@@ -18,7 +18,7 @@ const storeBase = backendUrl ? `${backendUrl}/store` : '';
 type MedusaFetchOptions = {
   method?: 'GET' | 'POST' | 'DELETE';
   body?: unknown;
-  query?: Record<string, string | number | boolean | undefined>;
+  query?: Record<string, string | number | boolean | undefined | (string | number | boolean)[]>;
   tags?: string[];
   cacheSeconds?: number;
 };
@@ -35,7 +35,14 @@ async function medusaFetch<T>(path: string, opts: MedusaFetchOptions = {}): Prom
   if (opts.query) {
     for (const [k, v] of Object.entries(opts.query)) {
       if (v === undefined) continue;
-      url.searchParams.set(k, String(v));
+      if (Array.isArray(v)) {
+        url.searchParams.delete(k);
+        for (const item of v) {
+          url.searchParams.append(k, String(item));
+        }
+      } else {
+        url.searchParams.set(k, String(v));
+      }
     }
   }
 
@@ -284,7 +291,7 @@ export async function createCart(): Promise<Cart> {
     tags: [TAGS.cart]
   });
 
-  revalidateTag(TAGS.cart);
+  // revalidateTag(TAGS.cart);
   return mapCart(data.cart, region.currency_code);
 }
 
@@ -310,7 +317,7 @@ export async function addToCart(lines: { merchandiseId: string; quantity: number
     lastCart = res.cart;
   }
 
-  revalidateTag(TAGS.cart);
+  // revalidateTag(TAGS.cart);
   return mapCart(lastCart, region.currency_code);
 }
 
@@ -329,7 +336,7 @@ export async function removeFromCart(lineIds: string[]): Promise<Cart> {
     last = res?.parent || res?.cart || res;
   }
 
-  revalidateTag(TAGS.cart);
+  // revalidateTag(TAGS.cart);
   return mapCart(last, region.currency_code);
 }
 
@@ -349,7 +356,7 @@ export async function updateCart(
     last = res.cart || res;
   }
 
-  revalidateTag(TAGS.cart);
+  // revalidateTag(TAGS.cart);
   return mapCart(last, region.currency_code);
 }
 
@@ -589,7 +596,7 @@ export async function getPages(): Promise<Page[]> {
 // Kept for compatibility with the template's webhook endpoint.
 // For Medusa, you can later wire webhooks to call this route with your own secret.
 export async function revalidate(_req: NextRequest): Promise<NextResponse> {
-  revalidateTag(TAGS.collections);
-  revalidateTag(TAGS.products);
+  //  // revalidateTag(TAGS.collections);
+  // revalidateTag(TAGS.products);
   return (await import('next/server')).NextResponse.json({ status: 200, revalidated: true });
 }
