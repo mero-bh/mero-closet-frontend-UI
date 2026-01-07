@@ -10,8 +10,8 @@ import type { Cart, Collection, Menu, Money, Page, Product, ProductVariant } fro
 // For Mero Closet we use Medusa v2 Store API instead, while keeping the same exports
 // so the UI components keep working.
 
-const backendUrl = (process.env.MEDUSA_BACKEND_URL || '').replace(/\/$/, '');
-const publishableKey = process.env.MEDUSA_PUBLISHABLE_KEY || '';
+const backendUrl = (process.env.MEDUSA_BACKEND_URL || 'https://mero-closet-backend.koyeb.app').replace(/\/$/, '');
+const publishableKey = process.env.MEDUSA_PUBLISHABLE_KEY || 'pk_dummy_placeholder';
 
 const storeBase = backendUrl ? `${backendUrl}/store` : '';
 
