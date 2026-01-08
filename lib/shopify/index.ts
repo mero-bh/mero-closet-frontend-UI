@@ -26,12 +26,8 @@ type MedusaFetchOptions = {
 async function medusaFetch<T>(path: string, opts: MedusaFetchOptions = {}): Promise<T> {
   if (!storeBase) {
     console.warn('MEDUSA_BACKEND_URL is not set, returning empty.');
-    // Return empty object/array cast as T to avoid crash
     return {} as T;
   }
-
-  // Skip key check if we are just testing connection or want to fail gracefully
-  // if (!publishableKey) { ... }
 
   const url = new URL(`${storeBase}${path.startsWith('/') ? path : `/${path}`}`);
   if (opts.query) {
@@ -49,6 +45,9 @@ async function medusaFetch<T>(path: string, opts: MedusaFetchOptions = {}): Prom
   }
 
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+
     const res = await fetch(url.toString(), {
       method: opts.method || 'GET',
       headers: {
@@ -57,22 +56,27 @@ async function medusaFetch<T>(path: string, opts: MedusaFetchOptions = {}): Prom
         'x-publishable-api-key': publishableKey
       },
       body: opts.body ? JSON.stringify(opts.body) : undefined,
+      signal: controller.signal,
       next: {
         tags: opts.tags,
         revalidate: opts.cacheSeconds
       }
     });
 
+    clearTimeout(timeoutId);
+
     if (!res.ok) {
-      // Log error but don't crash
       console.error(`Medusa request failed (${res.status}) ${url.pathname}`);
-      // Return empty structure based on expected type (heuristic)
       return {} as T;
     }
 
     return (await res.json()) as T;
-  } catch (error) {
-    console.error(`Network error reaching Medusa: ${error} (${url.toString()})`);
+  } catch (error: any) {
+    if (error.name === 'AbortError') {
+      console.error(`Medusa request timed out: ${url.toString()}`);
+    } else {
+      console.error(`Network error reaching Medusa: ${error} (${url.toString()})`);
+    }
     return {} as T;
   }
 }
@@ -440,7 +444,6 @@ export async function getProductRecommendations(productId: string): Promise<Prod
   return all.filter((p) => p.id !== productId).slice(0, 8);
 }
 
-// Collections are implemented using the CSV metadata (type: abaya/look/set).
 // Collections are implemented using both Medusa Collections and root Categories.
 export async function getCollections(): Promise<Collection[]> {
   // Fetch both Medusa Collections and root Categories
@@ -471,9 +474,9 @@ export async function getCollections(): Promise<Collection[]> {
     }
   }
 
-  const collections: Collection[] = [];
-  for (const c of merged) {
-    // Attempt to fetch one product to get a featured image for the category/collection
+  // Fetch all featured images in parallel to avoid build timeouts
+  const collections: Collection[] = await Promise.all(merged.map(async (c) => {
+    const title = c.title || c.name;
     const productsData = await medusaFetch<{ products: any[] }>('/products', {
       query: {
         limit: 1,
@@ -485,9 +488,8 @@ export async function getCollections(): Promise<Collection[]> {
 
     const product = productsData.products?.[0];
     const imgUrl = product?.images?.[0]?.url || product?.thumbnail || '';
-    const title = c.title || c.name;
 
-    collections.push({
+    return {
       handle: c.handle,
       title: title,
       description: c.description || title,
@@ -502,8 +504,8 @@ export async function getCollections(): Promise<Collection[]> {
           height: 600
         }
         : undefined
-    } as any);
-  }
+    } as any;
+  }));
 
   return collections;
 }
@@ -588,7 +590,7 @@ export async function getCollectionProducts({
       fields: 'id,handle,title,description,metadata,updated_at,*images,*variants,*variants.prices,*options'
     },
     tags: [TAGS.products],
-    cacheSeconds: 60
+    cacheSeconds: 3600
   });
 
   return (data.products || []).map((p) => mapProduct(p, region.currency_code));
