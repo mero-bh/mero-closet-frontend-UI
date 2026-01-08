@@ -1,5 +1,3 @@
-'use client';
-
 import { AddToCart } from 'components/cart/add-to-cart';
 import Price from 'components/price';
 import { ProductProvider } from 'components/product/product-context';
@@ -10,7 +8,25 @@ import { GridTileImage } from './tile';
 export default function FlipCard({ product }: { product: Product }) {
     return (
         <ProductProvider>
-            <div className="group h-[450px] w-full [perspective:1000px] mb-4">
+            {/* Mobile: Standard Clickable Tile */}
+            <div className="md:hidden w-full mb-4">
+                <Link href={`/product/${product.handle}`} className="block h-[350px] sm:h-[400px]">
+                    <GridTileImage
+                        alt={product.title}
+                        src={product.featuredImage?.url}
+                        fill
+                        label={{
+                            title: product.title,
+                            amount: product.priceRange.maxVariantPrice.amount,
+                            currencyCode: product.priceRange.maxVariantPrice.currencyCode,
+                        }}
+                        sizes="(min-width: 640px) 50vw, 100vw"
+                    />
+                </Link>
+            </div>
+
+            {/* Desktop: 3D Flip Card */}
+            <div className="hidden md:block group h-[450px] w-full [perspective:1000px] mb-4">
                 <div className="relative h-full w-full transition-all duration-700 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
                     {/* Front */}
                     <div className="absolute inset-0 h-full w-full [backface-visibility:hidden]">
@@ -18,7 +34,7 @@ export default function FlipCard({ product }: { product: Product }) {
                             alt={product.title}
                             src={product.featuredImage?.url}
                             fill
-                            sizes="(min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw"
+                            sizes="33vw"
                         />
                     </div>
 
