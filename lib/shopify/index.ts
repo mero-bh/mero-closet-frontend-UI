@@ -61,6 +61,7 @@ async function medusaFetch<T>(path: string, opts: MedusaFetchOptions = {}): Prom
       },
       body: opts.body ? JSON.stringify(opts.body) : undefined,
       signal: controller.signal,
+      cache: (opts.cacheSeconds === 0 || opts.method !== 'GET') ? 'no-store' : undefined,
       next: {
         tags: opts.tags,
         revalidate: opts.cacheSeconds
@@ -397,7 +398,7 @@ export async function getCart(): Promise<Cart | undefined> {
         fields: '*items,*items.variant,*items.variant.product,*items.variant.options,*items.variant.prices,total,subtotal,tax_total,currency_code'
       },
       tags: [TAGS.cart],
-      cacheSeconds: 5
+      cacheSeconds: 0
     });
     return mapCart(data.cart, region.currency_code);
   } catch {

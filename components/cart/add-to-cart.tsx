@@ -8,7 +8,8 @@ import LoadingThreeDotsJumping from 'components/ui/loading-dots';
 import { Pointer } from 'components/ui/pointer';
 import StarBorder from 'components/ui/starborder-button';
 import { Product, ProductVariant } from 'lib/shopify/types';
-import { useActionState } from 'react';
+import { useActionState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { useCart } from './cart-context';
 
 function SubmitButton({
@@ -80,6 +81,8 @@ export function AddToCart({ product }: { product: Product }) {
   const { addCartItem } = useCart();
   const { state } = useProduct();
   const [message, formAction, isPending] = useActionState(addItem, null);
+  const router = useRouter();
+  const [isTransitioning, startTransition] = useTransition();
 
   const variant = variants.find((variant: ProductVariant) =>
     variant.selectedOptions.every(
@@ -93,10 +96,13 @@ export function AddToCart({ product }: { product: Product }) {
   )!;
 
   const action = () => {
-    if (finalVariant) {
-      addCartItem(finalVariant, product);
-    }
-    formAction(selectedVariantId);
+    startTransition(async () => {
+      if (finalVariant) {
+        addCartItem(finalVariant, product);
+      }
+      await formAction(selectedVariantId);
+      router.refresh();
+    });
   };
 
   return (
@@ -104,7 +110,7 @@ export function AddToCart({ product }: { product: Product }) {
       <SubmitButton
         availableForSale={availableForSale}
         selectedVariantId={selectedVariantId}
-        isPending={isPending}
+        isPending={isPending || isTransitioning}
       />
       <p aria-live="polite" className="sr-only" role="status">
         {message}
