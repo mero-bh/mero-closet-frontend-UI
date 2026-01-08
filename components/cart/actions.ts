@@ -22,7 +22,7 @@ export async function addItem(
 
   try {
     await addToCart([{ merchandiseId: selectedVariantId, quantity: 1 }]);
-    revalidateTag(TAGS.cart, 'seconds');
+    revalidateTag(TAGS.cart);
   } catch (e) {
     return 'Error adding item to cart';
   }

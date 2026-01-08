@@ -92,15 +92,15 @@ export function AddToCart({ product }: { product: Product }) {
     (variant) => variant.id === selectedVariantId
   )!;
 
-  const actionWithOptimistic = async () => {
+  const action = () => {
     if (finalVariant) {
       addCartItem(finalVariant, product);
-      await formAction(selectedVariantId);
     }
+    formAction(selectedVariantId);
   };
 
   return (
-    <form action={actionWithOptimistic} className="w-full">
+    <form action={action} className="w-full">
       <SubmitButton
         availableForSale={availableForSale}
         selectedVariantId={selectedVariantId}
