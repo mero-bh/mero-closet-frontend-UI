@@ -54,7 +54,7 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body className="bg-[var(--background)] text-[var(--foreground)] selection:bg-teal-300 dark:selection:bg-pink-500 dark:selection:text-foreground">
+      <body className="bg-[var(--background)] text-[var(--foreground)] selection:bg-teal-300 dark:selection:bg-pink-500 dark:selection:text-[var(--foreground)]">
         <CartProvider cartPromise={cart}>
           <Navbar />
           <main>

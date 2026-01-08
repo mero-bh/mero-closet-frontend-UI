@@ -61,11 +61,14 @@ async function medusaFetch<T>(path: string, opts: MedusaFetchOptions = {}): Prom
       },
       body: opts.body ? JSON.stringify(opts.body) : undefined,
       signal: controller.signal,
-      cache: (opts.cacheSeconds === 0 || opts.method !== 'GET') ? 'no-store' : undefined,
-      next: {
-        tags: opts.tags,
-        revalidate: opts.cacheSeconds
-      }
+      ...(opts.cacheSeconds === 0 || opts.method !== 'GET'
+        ? { cache: 'no-store' }
+        : {
+          next: {
+            tags: opts.tags,
+            revalidate: opts.cacheSeconds
+          }
+        })
     });
 
     clearTimeout(timeoutId);
@@ -82,7 +85,8 @@ async function medusaFetch<T>(path: string, opts: MedusaFetchOptions = {}): Prom
     } else if (
       error.message?.includes('bail out of prerendering') ||
       error.digest?.includes('DYNAMIC_USAGE') ||
-      error.constructor.name === 'DynamicServerError'
+      error.constructor?.name === 'DynamicServerError' ||
+      String(error).includes('DynamicServerError')
     ) {
       throw error;
     } else {
@@ -529,8 +533,9 @@ export async function getCollections(): Promise<Collection[]> {
     }
   }
 
-  // Fetch all featured images in parallel to avoid build timeouts
-  const collections: Collection[] = await Promise.all(merged.map(async (c) => {
+  // Fetch all featured images sequentially to avoid slamming the API and build timeouts
+  const collections: Collection[] = [];
+  for (const c of merged) {
     const title = c.title || c.name;
     const productsData = await medusaFetch<{ products: any[] }>('/products', {
       query: {
@@ -544,7 +549,7 @@ export async function getCollections(): Promise<Collection[]> {
     const product = productsData.products?.[0];
     const imgUrl = product?.images?.[0]?.url || product?.thumbnail || '';
 
-    return {
+    collections.push({
       handle: c.handle,
       title: title,
       description: c.description || title,
@@ -559,8 +564,8 @@ export async function getCollections(): Promise<Collection[]> {
           height: 600
         }
         : undefined
-    } as any;
-  }));
+    } as any);
+  }
 
   return collections;
 }
