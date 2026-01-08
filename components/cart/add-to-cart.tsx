@@ -4,9 +4,12 @@ import { PlusIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import { addItem } from 'components/cart/actions';
 import { useProduct } from 'components/product/product-context';
+import LoadingThreeDotsJumping from 'components/ui/loading-dots';
+import { Pointer } from 'components/ui/pointer';
 import StarBorder from 'components/ui/starborder-button';
 import { Product, ProductVariant } from 'lib/shopify/types';
 import { useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { useCart } from './cart-context';
 
 function SubmitButton({
@@ -16,6 +19,7 @@ function SubmitButton({
   availableForSale: boolean;
   selectedVariantId: string | undefined;
 }) {
+  const { pending } = useFormStatus();
   const buttonBaseClasses = 'w-full h-full flex items-center justify-center';
   const disabledClasses = 'cursor-not-allowed opacity-60';
 
@@ -53,11 +57,19 @@ function SubmitButton({
       className={clsx(buttonBaseClasses, 'hover:opacity-90 transition-opacity')}
       color="var(--color-accent)"
       speed="3s"
+      disabled={pending}
     >
-      <div className="absolute left-0 ml-4">
-        <PlusIcon className="h-5" />
-      </div>
-      Add To Cart
+      <Pointer className="text-2xl">💖</Pointer>
+      {pending ? (
+        <LoadingThreeDotsJumping />
+      ) : (
+        <>
+          <div className="absolute left-0 ml-4">
+            <PlusIcon className="h-5" />
+          </div>
+          Add To Cart
+        </>
+      )}
     </StarBorder>
   );
 }
