@@ -82,16 +82,21 @@ async function medusaFetch<T>(path: string, opts: MedusaFetchOptions = {}): Prom
   } catch (error: any) {
     if (error.name === 'AbortError') {
       console.error(`Medusa request timed out: ${url.toString()}`);
-    } else if (
+      return {} as T;
+    }
+
+    // IMPORTANT: Next.js 15 PPR and Streaming depend on specific errors
+    // being thrown to bail out of static generation. We MUST not catch them.
+    if (
+      error.digest === 'DYNAMIC_USAGE' ||
       error.message?.includes('bail out of prerendering') ||
-      error.digest?.includes('DYNAMIC_USAGE') ||
       error.constructor?.name === 'DynamicServerError' ||
-      String(error).includes('DynamicServerError')
+      error.constructor?.name === 'NextDynamicUsageError'
     ) {
       throw error;
-    } else {
-      console.error(`Network error reaching Medusa: ${error} (${url.toString()})`);
     }
+
+    console.error(`Network error reaching Medusa: ${error} (${url.toString()})`);
     return {} as T;
   }
 }
@@ -533,39 +538,48 @@ export async function getCollections(): Promise<Collection[]> {
     }
   }
 
-  // Fetch all featured images sequentially to avoid slamming the API and build timeouts
-  const collections: Collection[] = [];
-  for (const c of merged) {
+  // Fetch all featured images in parallel for better performance
+  const collections: Collection[] = await Promise.all(merged.map(async (c) => {
     const title = c.title || c.name;
-    const productsData = await medusaFetch<{ products: any[] }>('/products', {
-      query: {
-        limit: 1,
-        [c.name ? 'category_id' : 'collection_id']: [c.id],
-        fields: '*images'
-      },
-      cacheSeconds: 3600
-    });
+    try {
+      const productsData = await medusaFetch<{ products: any[] }>('/products', {
+        query: {
+          limit: 1,
+          [c.name ? 'category_id' : 'collection_id']: [c.id],
+          fields: '*images'
+        },
+        cacheSeconds: 3600
+      });
 
-    const product = productsData.products?.[0];
-    const imgUrl = product?.images?.[0]?.url || product?.thumbnail || '';
+      const product = productsData.products?.[0];
+      const imgUrl = product?.images?.[0]?.url || product?.thumbnail || '';
 
-    collections.push({
-      handle: c.handle,
-      title: title,
-      description: c.description || title,
-      seo: { title: title, description: c.description || title },
-      path: `/search/${c.handle}`,
-      updatedAt: c.updated_at,
-      image: imgUrl
-        ? {
-          url: imgUrl,
-          altText: title,
-          width: 800,
-          height: 600
-        }
-        : undefined
-    } as any);
-  }
+      return {
+        handle: c.handle,
+        title: title,
+        description: c.description || title,
+        seo: { title: title, description: c.description || title },
+        path: `/search/${c.handle}`,
+        updatedAt: c.updated_at,
+        image: imgUrl
+          ? {
+            url: imgUrl,
+            altText: title,
+            width: 800,
+            height: 600
+          }
+          : undefined
+      } as any;
+    } catch (e) {
+      // If one fails, return collection without image
+      return {
+        handle: c.handle,
+        title: title,
+        path: `/search/${c.handle}`,
+        updatedAt: c.updated_at
+      } as any;
+    }
+  }));
 
   return collections;
 }
