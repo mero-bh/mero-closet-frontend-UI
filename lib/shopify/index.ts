@@ -10,8 +10,10 @@ import type { Cart, Collection, Menu, Money, Page, Product, ProductVariant } fro
 // For Mero Closet we use Medusa v2 Store API instead, while keeping the same exports
 // so the UI components keep working.
 
-const backendUrl = (process.env.MEDUSA_BACKEND_URL || 'https://essential-clarey-merocloset-8214c1dd.koyeb.app').replace(/\/$/, '');
-const publishableKey = process.env.MEDUSA_PUBLISHABLE_KEY || 'pk_448ea0ce3b5b682802ce8ba6bec567782e3a88a9eec38b5d3693ae4123ce2d31';
+const backendUrl = (process.env.MEDUSA_BACKEND_URL || 'https://mero-admin.koyeb.app')
+  .replace(/\/$/, '')
+  .replace(/\/app$/, ''); // Remove /app if user pasted the admin dashboard URL
+const publishableKey = process.env.MEDUSA_PUBLISHABLE_KEY || 'pk_1748d34ba703ac8b319ad6a11be402c32b7bce5f2f0b7e7614cdc7fba82731bf';
 
 const storeBase = backendUrl ? `${backendUrl}/store` : '';
 
