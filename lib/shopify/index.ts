@@ -441,27 +441,43 @@ export async function getProductRecommendations(productId: string): Promise<Prod
 }
 
 // Collections are implemented using the CSV metadata (type: abaya/look/set).
+// Collections are implemented using both Medusa Collections and root Categories.
 export async function getCollections(): Promise<Collection[]> {
-  // Fetch high-level categories
-  const data = await medusaFetch<{ product_categories: any[] }>('/product-categories', {
-    query: {
-      parent_category_id: 'null', // Only root categories
-      include_descendants_tree: 'false',
-      limit: 20
-    },
-    tags: ['collections'],
-    cacheSeconds: 3600
-  });
+  // Fetch both Medusa Collections and root Categories
+  const [collData, catData] = await Promise.all([
+    medusaFetch<{ collections: any[] }>('/collections', {
+      query: { limit: 20 },
+      tags: ['collections'],
+      cacheSeconds: 3600
+    }),
+    medusaFetch<{ product_categories: any[] }>('/product-categories', {
+      query: {
+        parent_category_id: 'null',
+        limit: 20
+      },
+      tags: ['collections'],
+      cacheSeconds: 3600
+    })
+  ]);
 
-  const categories = data.product_categories || [];
+  const rawCollections = collData.collections || [];
+  const rawCategories = catData.product_categories || [];
+
+  // Merge them (preferring Collections if there's a handle collision)
+  const merged = [...rawCollections];
+  for (const cat of rawCategories) {
+    if (!merged.find((m) => m.handle === cat.handle)) {
+      merged.push({ ...cat, title: cat.name }); // Categories use 'name', Collections use 'title'
+    }
+  }
+
   const collections: Collection[] = [];
-
-  for (const c of categories) {
-    // Attempt to fetch one product to get a featured image for the category
+  for (const c of merged) {
+    // Attempt to fetch one product to get a featured image for the category/collection
     const productsData = await medusaFetch<{ products: any[] }>('/products', {
       query: {
         limit: 1,
-        category_id: [c.id],
+        [c.name ? 'category_id' : 'collection_id']: [c.id],
         fields: '*images'
       },
       cacheSeconds: 3600
@@ -469,22 +485,23 @@ export async function getCollections(): Promise<Collection[]> {
 
     const product = productsData.products?.[0];
     const imgUrl = product?.images?.[0]?.url || product?.thumbnail || '';
+    const title = c.title || c.name;
 
-    // Map to Collection type
-    // Next.js Image component needs valid URLs, ensure we have one or fallback
     collections.push({
       handle: c.handle,
-      title: c.name,
-      description: c.description || c.name,
-      seo: { title: c.name, description: c.description || c.name },
+      title: title,
+      description: c.description || title,
+      seo: { title: title, description: c.description || title },
       path: `/search/${c.handle}`,
       updatedAt: c.updated_at,
-      image: imgUrl ? {
-        url: imgUrl,
-        altText: c.name,
-        width: 800,
-        height: 600
-      } : undefined
+      image: imgUrl
+        ? {
+          url: imgUrl,
+          altText: title,
+          width: 800,
+          height: 600
+        }
+        : undefined
     } as any);
   }
 
@@ -492,16 +509,35 @@ export async function getCollections(): Promise<Collection[]> {
 }
 
 export async function getCollection(handle: string): Promise<Collection | undefined> {
-  const data = await medusaFetch<{ product_categories: any[] }>('/product-categories', {
+  // Try collection first
+  const collData = await medusaFetch<{ collections: any[] }>('/collections', {
     query: { handle },
     tags: ['collections'],
     cacheSeconds: 3600
   });
 
-  const c = data.product_categories?.[0];
+  const coll = collData.collections?.[0];
+  if (coll) {
+    return {
+      handle: coll.handle,
+      title: coll.title,
+      description: coll.description || coll.title,
+      seo: { title: coll.title, description: coll.description || coll.title },
+      path: `/search/${coll.handle}`,
+      updatedAt: coll.updated_at
+    };
+  }
+
+  // Fallback to category
+  const catData = await medusaFetch<{ product_categories: any[] }>('/product-categories', {
+    query: { handle },
+    tags: ['collections'],
+    cacheSeconds: 3600
+  });
+
+  const c = catData.product_categories?.[0];
   if (!c) return undefined;
 
-  // We don't fetch image for single collection view usually, or we could if needed
   return {
     handle: c.handle,
     title: c.name,
@@ -523,21 +559,31 @@ export async function getCollectionProducts({
   sortKey?: string;
   query?: string;
 }): Promise<Product[]> {
-  // 1. Resolve collection handle to Category ID
-  const catData = await medusaFetch<{ product_categories: any[] }>('/product-categories', {
+  // 1. Try to find a Product Collection by handle
+  const collData = await medusaFetch<{ collections: any[] }>('/collections', {
     query: { handle: collection },
     cacheSeconds: 3600
   });
 
-  const categoryId = catData.product_categories?.[0]?.id;
+  const collectionId = collData.collections?.[0]?.id;
 
-  // 2. Fetch products
-  // Note: Medusa sort params might differ from Shopify's sortKey
+  // 2. If not found, try to find a Product Category by handle
+  let categoryId: string | undefined;
+  if (!collectionId) {
+    const catData = await medusaFetch<{ product_categories: any[] }>('/product-categories', {
+      query: { handle: collection },
+      cacheSeconds: 3600
+    });
+    categoryId = catData.product_categories?.[0]?.id;
+  }
+
+  // 3. Fetch products
   const region = await getDefaultRegion();
   const data = await medusaFetch<{ products: any[] }>(`/products`, {
     query: {
       limit: 100,
       q: query,
+      collection_id: collectionId ? [collectionId] : undefined,
       category_id: categoryId ? [categoryId] : undefined,
       fields: 'id,handle,title,description,metadata,updated_at,*images,*variants,*variants.prices,*options'
     },
@@ -552,7 +598,7 @@ export async function getMenu(handle: string): Promise<Menu[]> {
   // Dynamic menu based on collections
   const collections = await getCollections();
 
-  const items: Menu[] = collections.map(c => ({
+  const items: Menu[] = collections.map((c) => ({
     title: c.title,
     path: c.path
   }));
@@ -571,7 +617,7 @@ export async function getMenu(handle: string): Promise<Menu[]> {
   return items;
 }
 
-// Simple static pages (so `/about` etc work without Shopify CMS)
+// Simple static pages
 const PAGES: Page[] = [
   {
     id: 'about',
@@ -597,7 +643,6 @@ const PAGES: Page[] = [
 
 export async function getPage(handle: string): Promise<Page> {
   const page = PAGES.find((p) => p.handle === handle);
-  // Match previous behavior: return null-ish if not found.
   return (page as any) || (null as any);
 }
 
@@ -605,10 +650,6 @@ export async function getPages(): Promise<Page[]> {
   return PAGES;
 }
 
-// Kept for compatibility with the template's webhook endpoint.
-// For Medusa, you can later wire webhooks to call this route with your own secret.
 export async function revalidate(_req: NextRequest): Promise<NextResponse> {
-  //  // revalidateTag(TAGS.collections);
-  // revalidateTag(TAGS.products);
   return (await import('next/server')).NextResponse.json({ status: 200, revalidated: true });
 }
