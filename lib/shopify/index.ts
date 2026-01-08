@@ -85,7 +85,11 @@ async function medusaFetch<T>(path: string, opts: MedusaFetchOptions = {}): Prom
 // Region + currency
 // ----------------------
 
+let cachedRegion: { id: string; currency_code: string } | null = null;
+
 async function getDefaultRegion(): Promise<{ id: string; currency_code: string }> {
+  if (cachedRegion) return cachedRegion;
+
   try {
     const data = await medusaFetch<{ regions: any[] }>(`/regions`, {
       query: { limit: 50 },
@@ -105,10 +109,11 @@ async function getDefaultRegion(): Promise<{ id: string; currency_code: string }
       return { id: 'reg_dummy', currency_code: 'bhd' };
     }
 
-    return {
+    cachedRegion = {
       id: region.id,
       currency_code: (region.currency_code || 'bhd').toLowerCase()
     };
+    return cachedRegion;
   } catch (e) {
     return { id: 'reg_dummy', currency_code: 'bhd' };
   }
@@ -426,22 +431,61 @@ export async function getProduct(handle: string): Promise<Product | undefined> {
       fields: 'id,handle,title,description,metadata,updated_at,*images,*variants,*variants.prices,*options'
     },
     tags: [TAGS.products],
-    cacheSeconds: 60
+    cacheSeconds: 3600 // Products don't change often, 1 hour cache is safe
   });
 
   const p = (data.products || [])[0];
   if (p) return mapProduct(p, region.currency_code);
 
-  // Fallback if the backend doesn't support filtering by handle in query.
-  const all = await getProducts({});
-  return all.find((x) => x.handle === handle);
+  // Fallback: If handle lookup fails, only fetch enough products to find the match, not 100
+  const fallbackData = await medusaFetch<{ products: any[] }>(`/products`, {
+    query: {
+      limit: 20, // Reasonable subset
+      fields: 'id,handle'
+    },
+    cacheSeconds: 60
+  });
+
+  const found = (fallbackData.products || []).find((x) => x.handle === handle);
+  if (found) {
+    // If found in fallback, fetch the full details for it specifically
+    return getProductById(found.id);
+  }
+
+  return undefined;
+}
+
+async function getProductById(id: string): Promise<Product | undefined> {
+  const region = await getDefaultRegion();
+  const data = await medusaFetch<{ product: any }>(`/products/${id}`, {
+    query: {
+      fields: 'id,handle,title,description,metadata,updated_at,*images,*variants,*variants.prices,*options'
+    },
+    tags: [TAGS.products],
+    cacheSeconds: 3600
+  });
+
+  if (data.product) return mapProduct(data.product, region.currency_code);
+  return undefined;
 }
 
 export async function getProductRecommendations(productId: string): Promise<Product[]> {
   // Medusa doesn't provide recommendations out of the box.
-  // Return a small curated list (exclude the current product).
-  const all = await getProducts({});
-  return all.filter((p) => p.id !== productId).slice(0, 8);
+  // Optimization: Fetch only the latest 8 products instead of the entire catalog (100 products).
+  const region = await getDefaultRegion();
+  const data = await medusaFetch<{ products: any[] }>(`/products`, {
+    query: {
+      limit: 10, // Fetch slightly more to filter out current product
+      fields: 'id,handle,title,description,metadata,updated_at,*images,*variants,*variants.prices,*options'
+    },
+    tags: [TAGS.products],
+    cacheSeconds: 3600
+  });
+
+  return (data.products || [])
+    .filter((p) => p.id !== productId)
+    .slice(0, 8)
+    .map((p) => mapProduct(p, region.currency_code));
 }
 
 // Collections are implemented using both Medusa Collections and root Categories.
