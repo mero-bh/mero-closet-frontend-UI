@@ -7,18 +7,18 @@
   :root {
     --background: #fff0e4;
     --foreground: #0e0e0e;
-    --accent: #6754b9;
+    --accent:  #7365b4;
     --selection: rgba(67, 67, 67, 0.305);
-    --border-hover: #6352ad;
+    --border-hover: #7869b7;
     --muted: #5f5f5f3f;
   }
 
 .button {
-    @apply cursor-pointer;
+    cursor: pointer !important;
 }
 
 .a {
-    @apply cursor-pointer;
+    cursor: pointer !important;
 }
 
   .dark {
