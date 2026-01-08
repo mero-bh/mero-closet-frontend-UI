@@ -39,7 +39,7 @@ export default function FlipCard({ product }: { product: Product }) {
                     </div>
 
                     {/* Back */}
-                    <div className="absolute inset-0 h-full w-full [transform:rotateY(180deg)] [backface-visibility:hidden] flex flex-col items-center justify-between bg-background/95 backdrop-blur-md border-3 border-accent/20 rounded-lg p-8 text-center shadow-lg dark:shadow-accent/5">
+                    <div className="absolute inset-0 h-full w-full [transform:rotateY(180deg)] [backface-visibility:hidden] flex flex-col items-center justify-between bg-background/95 backdrop-blur-md border-3 border-accent/20 rounded-md p-8 text-center shadow-lg dark:shadow-accent/5">
                         <div className="flex flex-col items-center gap-4">
                             <Link href={`/product/${product.handle}`} className="group/title">
                                 <h3 className="text-2xl font-bold text-foreground group-hover/title:text-accent transition-colors leading-snug line-clamp-2">

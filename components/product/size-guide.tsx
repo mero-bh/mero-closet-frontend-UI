@@ -114,8 +114,8 @@ export default function SizeGuide() {
                                             </Tab.List>
                                             <Tab.Panels className="mt-4">
                                                 {images.map((img, idx) => (
-                                                    <Tab.Panel key={idx} className="rounded-xl bg-neutral-50 p-2 dark:bg-neutral-800/50">
-                                                        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg">
+                                                    <Tab.Panel key={idx} className="rounded-md bg-neutral-50 p-2 dark:bg-neutral-800/50">
+                                                        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md">
                                                             <Image
                                                                 src={isDark ? img.dark : img.light}
                                                                 alt={img.name}
