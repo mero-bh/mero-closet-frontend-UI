@@ -38,12 +38,13 @@ function SubmitButton({
 
   if (!selectedVariantId) {
     return (
+
       <StarBorder
         disabled
         aria-label="Please select an option"
         className={clsx(buttonBaseClasses, disabledClasses)}
         color="gray"
-      >
+        >
         <div className="absolute left-0 ml-4">
           <PlusIcon className="h-5" />
         </div>
@@ -55,7 +56,7 @@ function SubmitButton({
   return (
     <StarBorder
       aria-label="Add to cart"
-      className={clsx(buttonBaseClasses, 'hover:opacity-90 transition-opacity')}
+      className={clsx(buttonBaseClasses, 'hover:opacity-90 transition-opacity transition-all duration-300')}
       color="var(--color-accent)"
       speed="3s"
       disabled={isPending}
@@ -66,7 +67,7 @@ function SubmitButton({
         <LoadingThreeDotsJumping />
       ) : (
         <>
-          <div className="absolute left-0 ml-4">
+          <div className="absolute transition-all duration-300 ease-in-out hover:translate-y-1 hover:text-background left-0 ml-4">
             <PlusIcon className="h-5" />
           </div>
           Add To Cart

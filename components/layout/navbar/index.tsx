@@ -1,6 +1,6 @@
 import { AnimatedThemeToggler } from 'components/animated-theme-toggler';
 import CategoriesMenu from './categories-menu';
-import CartModal from 'components/cart/modal';
+import  CartModal  from 'components/cart/modal';
 import LogoSquare from 'components/logo-square';
 import { getMenu } from 'lib/shopify';
 import { Menu } from 'lib/shopify/types';
@@ -40,11 +40,15 @@ export async function Navbar() {
             <Search />
           </Suspense>
         </div>
-        <div className="flex justify-end md:w-1/3">
+        <div className="flex justify-end md:w-1/3 transition-all duration-300 ease-in-out hover:translate-y-1 hover:text-background">
           <AnimatedThemeToggler className="mr-4 !text-white" />
+         </div>
+          <div className="transition-all duration-300 ease-in-out hover:translate-y-1 hover:text-background">
+            
           <CartModal />
-        </div>
-      </div>
+          </div>
+       </div>
+      
     </nav>
   );
 }

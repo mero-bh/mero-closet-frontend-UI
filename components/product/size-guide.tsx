@@ -51,7 +51,7 @@ export default function SizeGuide() {
         <>
             <button
                 onClick={() => setIsOpen(true)}
-                className="mt-4 flex w-full items-center justify-center rounded-full border border-neutral-200 bg-white p-3 text-sm font-medium text-black transition-all hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white dark:hover:bg-neutral-800"
+                className="mt-4 cursor-pointer flex w-full items-center justify-center rounded-full border border-neutral-200 bg-white/60 hover:bg-white/90 p-3 text-sm font-medium text-black transition-all  "
             >
                 <span>📏 Size Guide & My Measurements</span>
             </button>
@@ -83,7 +83,7 @@ export default function SizeGuide() {
                             <Dialog.Panel className="w-full max-w-4xl overflow-hidden rounded-2xl bg-white p-6 shadow-xl dark:bg-neutral-900">
                                 <div className="flex items-center justify-between mb-4">
                                     <Dialog.Title className="text-xl cursor-pointer font-medium text-black dark:text-white">
-                                        Size Guide & Measurements
+                                        Size Guide & Measurements 🪡
                                     </Dialog.Title>
                                     <button onClick={() => setIsOpen(false)} className="text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200">
                                         <XMarkIcon className="h-6 w-6" />
