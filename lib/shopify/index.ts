@@ -79,6 +79,12 @@ async function medusaFetch<T>(path: string, opts: MedusaFetchOptions = {}): Prom
   } catch (error: any) {
     if (error.name === 'AbortError') {
       console.error(`Medusa request timed out: ${url.toString()}`);
+    } else if (
+      error.message?.includes('bail out of prerendering') ||
+      error.digest?.includes('DYNAMIC_USAGE') ||
+      error.constructor.name === 'DynamicServerError'
+    ) {
+      throw error;
     } else {
       console.error(`Network error reaching Medusa: ${error} (${url.toString()})`);
     }
