@@ -92,10 +92,17 @@ export function TabsTrigger({
 }
 
 export function TabContents({ className, children, ...props }: React.ComponentProps<'div'>) {
+    const context = React.useContext(TabsContext);
+    const activeChild = React.Children.toArray(children).find(
+        (child) => React.isValidElement(child) && (child as React.ReactElement<any>).props.value === context?.value
+    );
+
     return (
         <div className={cn('mt-2 relative overflow-hidden', className)} {...props}>
             <AnimatePresence mode="wait">
-                {children}
+                {activeChild && React.cloneElement(activeChild as React.ReactElement<any>, {
+                    key: context?.value
+                })}
             </AnimatePresence>
         </div>
     );
@@ -107,11 +114,6 @@ export function TabsContent({
     children,
     ...props
 }: { value: string } & React.ComponentPropsWithoutRef<'div'>) {
-    const context = React.useContext(TabsContext);
-    if (!context) throw new Error('TabsContent must be used within Tabs');
-
-    if (context.value !== value) return null;
-
     // Cast to any for motion div to bypass strict event type conflicts in Motion 12 / React 19
     const motionProps: any = {
         initial: { opacity: 0, y: 10, filter: 'blur(4px)' },
@@ -123,7 +125,7 @@ export function TabsContent({
     };
 
     return (
-        <motion.div key={value} {...motionProps}>
+        <motion.div {...motionProps}>
             {children}
         </motion.div>
     );

@@ -74,7 +74,9 @@ async function medusaFetch<T>(path: string, opts: MedusaFetchOptions = {}): Prom
     clearTimeout(timeoutId);
 
     if (!res.ok) {
-      console.error(`Medusa request failed (${res.status}) ${url.pathname}`);
+      if (res.status !== 404) {
+        console.error(`Medusa request failed (${res.status}) ${url.pathname}`);
+      }
       return {} as T;
     }
 
@@ -415,6 +417,7 @@ export async function getCart(): Promise<Cart | undefined> {
       tags: [TAGS.cart],
       cacheSeconds: 0
     });
+    if (!data.cart || !data.cart.id) return undefined;
     return mapCart(data.cart, region.currency_code);
   } catch {
     // Old/invalid cart id.

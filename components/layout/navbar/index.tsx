@@ -1,7 +1,8 @@
 import { AnimatedThemeToggler } from 'components/animated-theme-toggler';
 import CategoriesMenu from './categories-menu';
-import  CartModal  from 'components/cart/modal';
+import CartModal from 'components/cart/modal';
 import LogoSquare from 'components/logo-square';
+import { NavbarUserControl } from './user-control';
 import { getMenu } from 'lib/shopify';
 import { Menu } from 'lib/shopify/types';
 import Link from 'next/link';
@@ -40,15 +41,19 @@ export async function Navbar() {
             <Search />
           </Suspense>
         </div>
-        <div className="flex justify-end md:w-1/3 transition-all duration-300 ease-in-out hover:translate-y-1 hover:text-background">
-          <AnimatedThemeToggler className="mr-4 !text-white" />
-         </div>
-          <div className="transition-all duration-300 ease-in-out hover:translate-y-1 hover:text-background">
-            
-          <CartModal />
+        <div className="flex justify-end gap-x-4 md:w-1/3 items-center">
+          <Suspense fallback={null}>
+            <NavbarUserControl />
+          </Suspense>
+          <div className="transition-all duration-300 ease-in-out hover:translate-y-1">
+            <AnimatedThemeToggler className="!text-white" />
           </div>
-       </div>
-      
+          <div className="transition-all duration-300 ease-in-out hover:translate-y-1">
+            <CartModal />
+          </div>
+        </div>
+      </div>
+
     </nav>
   );
 }

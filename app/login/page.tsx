@@ -1,79 +1,233 @@
+'use client';
+
+import React, { useState } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabContents, TabsContent } from 'components/ui/tabs';
-import { signIn } from 'auth';
-import { GoogleIcon, AppleIcon, InstagramIcon } from 'components/icons/social';
+import { signIn } from 'next-auth/react';
+import Image from 'next/image';
+import { motion, AnimatePresence } from 'motion/react';
 
 export default function LoginPage() {
+    const [view, setView] = useState<'auth' | 'forgot-password'>('auth');
+    const [email, setEmail] = useState('');
+
+    const handleGoogleLogin = () => {
+        signIn('google', { callbackUrl: '/' });
+    };
+
     return (
-        <div className="flex min-h-[calc(100vh-200px)] items-center justify-center p-4">
-            <div className="w-full max-w-md space-y-8 rounded-3xl border border-neutral-200 bg-white/50 p-8 shadow-2xl backdrop-blur-xl dark:border-neutral-800 dark:bg-black/50">
-                <div className="text-center">
-                    <h2 className="text-3xl font-bold tracking-tight text-foreground">Welcome Back</h2>
-                    <p className="mt-2 text-sm text-neutral-500">Choose your preferred login method</p>
-                </div>
+        <div className="flex min-h-[90vh] items-center justify-center px-4 py-12">
+            <div className="w-full max-w-[400px]">
+                <AnimatePresence mode="wait">
+                    {view === 'auth' ? (
+                        <motion.div
+                            key="auth"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            className="rounded-3xl border border-neutral-200 bg-white p-8 shadow-2xl dark:border-neutral-800 dark:bg-neutral-900"
+                        >
+                            <div className="mb-8 text-center">
+                                <h1 className="text-3xl font-bold tracking-tight text-neutral-900 dark:text-white">
+                                    Welcome Back
+                                </h1>
+                                <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
+                                    Select a method to continue
+                                </p>
+                            </div>
 
-                <Tabs defaultValue="social" className="mt-8">
-                    <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="social">Social</TabsTrigger>
-                        <TabsTrigger value="email">Email</TabsTrigger>
-                    </TabsList>
+                            <Tabs defaultValue="login" className="w-full">
+                                <TabsList className="mb-6 grid w-full grid-cols-2 rounded-2xl bg-neutral-100 p-1 dark:bg-neutral-800">
+                                    <TabsTrigger value="login" className="rounded-xl py-2.5">Login</TabsTrigger>
+                                    <TabsTrigger value="signup" className="rounded-xl py-2.5">Sign Up</TabsTrigger>
+                                </TabsList>
 
-                    <TabContents>
-                        <TabsContent value="social" className="space-y-4 pt-4">
-                            <form
-                                action={async () => {
-                                    "use server"
-                                    await signIn("google", { redirectTo: "/" })
-                                }}
-                            >
-                                <button
-                                    type="submit"
-                                    className="flex w-full items-center justify-center gap-3 rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm font-semibold text-neutral-700 transition-all hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800 cursor-pointer"
-                                >
-                                    <GoogleIcon className="h-5 w-5" />
-                                    Continue with Google
+                                <TabContents>
+                                    <TabsContent value="login" className="space-y-6">
+                                        <div className="space-y-4">
+                                            {/* Google Login Button - Dark/Light aware */}
+                                            <motion.button
+                                                whileHover={{ scale: 1.01 }}
+                                                whileTap={{ scale: 0.99 }}
+                                                onClick={handleGoogleLogin}
+                                                className="group relative flex w-full items-center justify-center overflow-hidden rounded-xl border border-neutral-200 bg-white transition-all hover:border-neutral-300 hover:shadow-sm dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600"
+                                            >
+                                                <div className="relative h-[44px] w-full max-w-[240px]">
+                                                    <Image
+                                                        src="/google-button-light.svg"
+                                                        alt="Sign in with Google"
+                                                        fill
+                                                        className="block object-contain dark:hidden"
+                                                        priority
+                                                    />
+                                                    <Image
+                                                        src="/google-button-dark.svg"
+                                                        alt="Sign in with Google"
+                                                        fill
+                                                        className="hidden object-contain dark:block"
+                                                        priority
+                                                    />
+                                                </div>
+                                            </motion.button>
+
+                                            <div className="relative">
+                                                <div className="absolute inset-0 flex items-center">
+                                                    <span className="w-full border-t border-neutral-200 dark:border-neutral-800" />
+                                                </div>
+                                                <div className="relative flex justify-center text-xs uppercase">
+                                                    <span className="bg-white px-2 text-neutral-500 dark:bg-neutral-900">
+                                                        Or continue with email
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Email</label>
+                                                <input
+                                                    type="email"
+                                                    placeholder="name@example.com"
+                                                    className="w-full rounded-xl border border-neutral-200 bg-transparent px-4 py-3 outline-none transition-all focus:ring-2 focus:ring-neutral-900/5 dark:border-neutral-800 dark:focus:ring-white/5"
+                                                />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <div className="flex items-center justify-between">
+                                                    <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Password</label>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setView('forgot-password')}
+                                                        className="text-xs text-neutral-500 hover:text-neutral-900 dark:hover:text-white"
+                                                    >
+                                                        Forgot password?
+                                                    </button>
+                                                </div>
+                                                <input
+                                                    type="password"
+                                                    placeholder="••••••••"
+                                                    className="w-full rounded-xl border border-neutral-200 bg-transparent px-4 py-3 outline-none transition-all focus:ring-2 focus:ring-neutral-900/5 dark:border-neutral-800 dark:focus:ring-white/5"
+                                                />
+                                            </div>
+
+                                            <button className="w-full rounded-xl bg-neutral-900 py-3 font-semibold text-white transition-all hover:bg-neutral-800 active:scale-[0.98] dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100">
+                                                Login
+                                            </button>
+                                        </div>
+                                    </TabsContent>
+
+                                    <TabsContent value="signup" className="space-y-6">
+                                        <div className="space-y-4">
+                                            <motion.button
+                                                whileHover={{ scale: 1.01 }}
+                                                whileTap={{ scale: 0.99 }}
+                                                onClick={handleGoogleLogin}
+                                                className="group relative flex w-full items-center justify-center overflow-hidden rounded-xl border border-neutral-200 bg-white transition-all hover:border-neutral-300 hover:shadow-sm dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600"
+                                            >
+                                                <div className="relative h-[44px] w-full max-w-[240px]">
+                                                    <Image
+                                                        src="/google-button-light.svg"
+                                                        alt="Sign up with Google"
+                                                        fill
+                                                        className="block object-contain dark:hidden"
+                                                        priority
+                                                    />
+                                                    <Image
+                                                        src="/google-button-dark.svg"
+                                                        alt="Sign up with Google"
+                                                        fill
+                                                        className="hidden object-contain dark:block"
+                                                        priority
+                                                    />
+                                                </div>
+                                            </motion.button>
+
+                                            <div className="relative">
+                                                <div className="absolute inset-0 flex items-center">
+                                                    <span className="w-full border-t border-neutral-200 dark:border-neutral-800" />
+                                                </div>
+                                                <div className="relative flex justify-center text-xs uppercase">
+                                                    <span className="bg-white px-2 text-neutral-500 dark:bg-neutral-900">
+                                                        Create account with email
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Full Name</label>
+                                                <input
+                                                    type="text"
+                                                    placeholder="John Doe"
+                                                    className="w-full rounded-xl border border-neutral-200 bg-transparent px-4 py-3 outline-none transition-all focus:ring-2 focus:ring-neutral-900/5 dark:border-neutral-800 dark:focus:ring-white/5"
+                                                />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Email</label>
+                                                <input
+                                                    type="email"
+                                                    placeholder="name@example.com"
+                                                    className="w-full rounded-xl border border-neutral-200 bg-transparent px-4 py-3 outline-none transition-all focus:ring-2 focus:ring-neutral-900/5 dark:border-neutral-800 dark:focus:ring-white/5"
+                                                />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Password</label>
+                                                <input
+                                                    type="password"
+                                                    placeholder="Create a password"
+                                                    className="w-full rounded-xl border border-neutral-200 bg-transparent px-4 py-3 outline-none transition-all focus:ring-2 focus:ring-neutral-900/5 dark:border-neutral-800 dark:focus:ring-white/5"
+                                                />
+                                            </div>
+
+                                            <button className="w-full rounded-xl bg-neutral-900 py-3 font-semibold text-white transition-all hover:bg-neutral-800 active:scale-[0.98] dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100">
+                                                Create Account
+                                            </button>
+                                        </div>
+                                    </TabsContent>
+                                </TabContents>
+                            </Tabs>
+                        </motion.div>
+                    ) : (
+                        <motion.div
+                            key="forgot-password"
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="rounded-3xl border border-neutral-200 bg-white p-8 shadow-2xl dark:border-neutral-800 dark:bg-neutral-900"
+                        >
+                            <div className="mb-6 text-center">
+                                <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">Reset Password</h2>
+                                <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+                                    Enter your email and we'll send you a reset link.
+                                </p>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Email</label>
+                                    <input
+                                        type="email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        placeholder="name@example.com"
+                                        className="w-full rounded-xl border border-neutral-200 bg-transparent px-4 py-3 outline-none transition-all focus:ring-2 focus:ring-neutral-900/5 dark:border-neutral-800 dark:focus:ring-white/5"
+                                        autoFocus
+                                    />
+                                </div>
+
+                                <button className="w-full rounded-xl bg-neutral-900 py-3 font-semibold text-white transition-all hover:bg-neutral-800 active:scale-[0.98] dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100">
+                                    Send Reset Link
                                 </button>
-                            </form>
 
-                            <form
-                                action={async () => {
-                                    "use server"
-                                    await signIn("apple", { redirectTo: "/" })
-                                }}
-                            >
                                 <button
-                                    type="submit"
-                                    className="flex w-full items-center justify-center gap-3 rounded-xl bg-black px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 cursor-pointer"
+                                    type="button"
+                                    onClick={() => setView('auth')}
+                                    className="w-full py-2 text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900 dark:hover:text-white"
                                 >
-                                    <AppleIcon className="h-5 w-5 fill-current" />
-                                    Continue with Apple
+                                    Back to Login
                                 </button>
-                            </form>
-
-                            <form
-                                action={async () => {
-                                    "use server"
-                                    await signIn("instagram", { redirectTo: "/" })
-                                }}
-                            >
-                                <button
-                                    type="submit"
-                                    className="flex w-full items-center justify-center gap-3 rounded-xl border border-pink-200 bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] px-4 py-3 text-sm font-semibold text-white transition-all hover:opacity-90 cursor-pointer"
-                                >
-                                    <InstagramIcon className="h-5 w-5" />
-                                    Continue with Instagram
-                                </button>
-                            </form>
-                        </TabsContent>
-
-                        <TabsContent value="email" className="space-y-4 pt-4 text-center text-sm text-neutral-500">
-                            <p>Email login coming soon...</p>
-                        </TabsContent>
-                    </TabContents>
-                </Tabs>
-
-                <p className="text-center text-xs text-neutral-400">
-                    By continuing, you agree to our Terms of Service and Privacy Policy.
-                </p>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
         </div>
     );
