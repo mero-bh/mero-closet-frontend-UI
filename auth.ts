@@ -7,23 +7,29 @@ import { prisma } from "lib/prisma"
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
     adapter: PrismaAdapter(prisma),
+    trustHost: true,
     providers: [
         Google({
             clientId: process.env.AUTH_GOOGLE_ID,
             clientSecret: process.env.AUTH_GOOGLE_SECRET,
         }),
-        Apple({
-            clientId: process.env.AUTH_APPLE_ID,
-            clientSecret: process.env.AUTH_APPLE_SECRET,
-        }),
-        Instagram({
-            clientId: process.env.AUTH_INSTAGRAM_ID,
-            clientSecret: process.env.AUTH_INSTAGRAM_SECRET,
-        }),
+        // Only include Apple/Instagram if they have valid looking secrets
+        ...(process.env.AUTH_APPLE_ID && process.env.AUTH_APPLE_ID !== 'xxxxxx' ? [
+            Apple({
+                clientId: process.env.AUTH_APPLE_ID,
+                clientSecret: process.env.AUTH_APPLE_SECRET,
+            })
+        ] : []),
+        ...(process.env.AUTH_INSTAGRAM_ID && process.env.AUTH_INSTAGRAM_ID !== 'xxxxxx' ? [
+            Instagram({
+                clientId: process.env.AUTH_INSTAGRAM_ID,
+                clientSecret: process.env.AUTH_INSTAGRAM_SECRET,
+            })
+        ] : []),
     ],
     callbacks: {
         async session({ session, user }) {
-            if (session.user) {
+            if (session.user && user) {
                 // @ts-ignore
                 session.user.id = user.id;
                 // @ts-ignore
@@ -31,12 +37,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             }
             return session;
         },
-        async signIn({ user }) {
-            if (user.id) {
-                await prisma.user.update({
-                    where: { id: user.id },
-                    data: { isOnline: true, lastSeen: new Date() }
-                });
+        async signIn({ user, account }) {
+            // Update online status if user exists
+            if (user?.id) {
+                try {
+                    await prisma.user.update({
+                        where: { id: user.id },
+                        data: { isOnline: true, lastSeen: new Date() }
+                    });
+                } catch (error) {
+                    console.error("Error updating user status:", error);
+                }
             }
             return true;
         }
