@@ -28,8 +28,9 @@ function loadEnvFile(fileName: string) {
       value = value.replace(/\s+#.*$/, "");
       value = value.trim();
     } else {
-      const q = value[0];
-      if (value.endsWith(q)) value = value.slice(1, -1);
+      const q = value.charAt(0);
+      // If we have both opening and closing quotes, strip both; otherwise strip only the first.
+      if (value.length >= 2 && value.endsWith(q)) value = value.slice(1, -1);
       else value = value.slice(1);
     }
 
