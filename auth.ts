@@ -5,33 +5,47 @@ import Instagram from "next-auth/providers/instagram"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import { prisma } from "lib/prisma"
 
+function hasSecret(value?: string) {
+    return Boolean(value && value.trim() && value.trim() !== "xxxxxx")
+}
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
     adapter: PrismaAdapter(prisma),
     secret: process.env.AUTH_SECRET,
     trustHost: true,
     providers: [
-        Google({
-            clientId: process.env.AUTH_GOOGLE_ID,
-            clientSecret: process.env.AUTH_GOOGLE_SECRET,
-            authorization: {
-                params: {
-                    scope: "openid profile email",
-                },
-            },
-        }),
+        // Google is the primary provider. If its env vars are missing, Auth.js throws a confusing config error.
+        ...(hasSecret(process.env.AUTH_GOOGLE_ID) && hasSecret(process.env.AUTH_GOOGLE_SECRET)
+            ? [
+                Google({
+                    clientId: process.env.AUTH_GOOGLE_ID,
+                    clientSecret: process.env.AUTH_GOOGLE_SECRET,
+                    authorization: {
+                        params: {
+                            scope: "openid profile email",
+                        },
+                    },
+                }),
+            ]
+            : []),
+
         // Only include Apple/Instagram if they have valid looking secrets
-        ...(process.env.AUTH_APPLE_ID && process.env.AUTH_APPLE_ID !== 'xxxxxx' ? [
-            Apple({
-                clientId: process.env.AUTH_APPLE_ID,
-                clientSecret: process.env.AUTH_APPLE_SECRET,
-            })
-        ] : []),
-        ...(process.env.AUTH_INSTAGRAM_ID && process.env.AUTH_INSTAGRAM_ID !== 'xxxxxx' ? [
-            Instagram({
-                clientId: process.env.AUTH_INSTAGRAM_ID,
-                clientSecret: process.env.AUTH_INSTAGRAM_SECRET,
-            })
-        ] : []),
+        ...(hasSecret(process.env.AUTH_APPLE_ID) && hasSecret(process.env.AUTH_APPLE_SECRET)
+            ? [
+                Apple({
+                    clientId: process.env.AUTH_APPLE_ID,
+                    clientSecret: process.env.AUTH_APPLE_SECRET,
+                }),
+            ]
+            : []),
+        ...(hasSecret(process.env.AUTH_INSTAGRAM_ID) && hasSecret(process.env.AUTH_INSTAGRAM_SECRET)
+            ? [
+                Instagram({
+                    clientId: process.env.AUTH_INSTAGRAM_ID,
+                    clientSecret: process.env.AUTH_INSTAGRAM_SECRET,
+                }),
+            ]
+            : []),
     ],
     callbacks: {
         async session({ session, user }) {

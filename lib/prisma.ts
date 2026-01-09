@@ -11,6 +11,14 @@ export const prisma = (() => {
         return globalForPrisma.prisma
     }
 
+    if (!connectionString) {
+        // This is the #1 reason auth/prisma blows up with a vague "configuration" error.
+        // We throw a clear error so you fix the env variable once instead of chasing ghosts.
+        throw new Error(
+            "DATABASE_URL is missing. Set it in .env.local (Next.js) or your hosting provider environment variables."
+        )
+    }
+
     const pool = new Pool({ connectionString: connectionString })
     const adapter = new PrismaNeon(pool as any)
     return new PrismaClient({ adapter })
