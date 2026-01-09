@@ -29,9 +29,10 @@ function formatBytes(bytes?: number) {
 
 export function ReelsBar() {
   const backendBase = useMemo(
-    () => (process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || '').replace(/\/$/, ''),
+    () => (process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || 'https://mero-admin.koyeb.app').replace(/\/$/, ''),
     []
   );
+  const publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || 'pk_448ea0ce3b5b682802ce8ba6bec567782e3a88a9eec38b5d3693ae4123ce2d31';
 
   const [items, setItems] = useState<ReelItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -48,8 +49,16 @@ export function ReelsBar() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${backendBase}/store/reels`, { cache: 'no-store' });
-      if (!res.ok) throw new Error(`Failed to fetch reels (${res.status})`);
+      const res = await fetch(`${backendBase}/store/reels`, {
+        cache: 'no-store',
+        headers: {
+          'x-publishable-api-key': publishableKey
+        }
+      });
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || `Failed to fetch reels (${res.status})`);
+      }
       const data = await res.json();
       setItems(Array.isArray(data?.items) ? data.items : []);
     } catch (e: any) {
@@ -72,6 +81,9 @@ export function ReelsBar() {
       form.append('file', file);
       const res = await fetch(`${backendBase}/store/reels/upload`, {
         method: 'POST',
+        headers: {
+          'x-publishable-api-key': publishableKey
+        },
         body: form
       });
       if (!res.ok) {
