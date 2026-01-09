@@ -7,11 +7,17 @@ import { prisma } from "lib/prisma"
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
     adapter: PrismaAdapter(prisma),
+    secret: process.env.AUTH_SECRET,
     trustHost: true,
     providers: [
         Google({
             clientId: process.env.AUTH_GOOGLE_ID,
             clientSecret: process.env.AUTH_GOOGLE_SECRET,
+            authorization: {
+                params: {
+                    scope: "openid profile email",
+                },
+            },
         }),
         // Only include Apple/Instagram if they have valid looking secrets
         ...(process.env.AUTH_APPLE_ID && process.env.AUTH_APPLE_ID !== 'xxxxxx' ? [
