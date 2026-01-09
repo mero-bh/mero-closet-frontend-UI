@@ -19,6 +19,8 @@ function loadEnvFile(fileName: string) {
     if (!m) continue;
 
     const key = m[1];
+    if (key === undefined) continue;
+
     let value = m[2] ?? "";
 
     // Strip inline comment when value is unquoted
