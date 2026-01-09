@@ -19,7 +19,6 @@ function loadEnvFile(fileName: string) {
     if (!m) continue;
 
     const key = m[1];
-    if (!key) continue;
     let value = m[2] ?? "";
 
     // Strip inline comment when value is unquoted
@@ -30,8 +29,8 @@ function loadEnvFile(fileName: string) {
       value = value.trim();
     } else {
       const q = value[0];
-      if (q && value.endsWith(q)) value = value.slice(1, -1);
-      else if (q) value = value.slice(1);
+      if (value.endsWith(q)) value = value.slice(1, -1);
+      else value = value.slice(1);
     }
 
     // Do not override already-set environment variables (Vercel/CI)
