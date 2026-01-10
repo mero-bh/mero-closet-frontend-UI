@@ -8,44 +8,32 @@ const rawConnectionString = process.env.DATABASE_URL
 
 export const prisma = (() => {
     console.log("[Prisma Debug] Initializing Prisma Client...")
-    console.log(`[Prisma Debug] NODE_ENV: ${process.env.NODE_ENV}`)
 
     if (globalForPrisma.prisma) {
-        console.log("[Prisma Debug] Using existing global prisma instance.")
         return globalForPrisma.prisma
     }
 
-    if (!rawConnectionString || rawConnectionString.trim() === "") {
-        console.error("[Prisma Warning] DATABASE_URL is UNDEFINED or EMPTY.")
-        // In local development, we might expect it to fail, but in production this is critical.
+    const connectionString = (rawConnectionString || "").trim()
+
+    if (!connectionString) {
+        console.error("[Prisma Fatal] DATABASE_URL is missing!")
         if (process.env.NODE_ENV === "production") {
-            throw new Error("CRITICAL: DATABASE_URL is missing in production environment!")
+            throw new Error("DATABASE_URL is required in production")
         }
-    } else {
-        console.log(`[Prisma Debug] DATABASE_URL found. Length: ${rawConnectionString.length}`)
-        console.log(`[Prisma Debug] URL Starts with: ${rawConnectionString.substring(0, 15)}...`)
-    }
-
-    // Clean the connection string
-    let connectionString = (rawConnectionString || "").trim()
-
-    // Neon's serverless driver sometimes performs better with postgres://
-    if (connectionString.startsWith("postgresql://")) {
-        console.log("[Prisma Debug] Normalizing postgresql:// to postgres:// for Neon adapter")
-        connectionString = connectionString.replace("postgresql://", "postgres://")
     }
 
     try {
-        console.log("[Prisma Debug] Creating Neon Pool and Adapter...")
+        console.log("[Prisma Debug] Creating Prisma Client with Neon Adapter...")
         const pool = new Pool({ connectionString })
         const adapter = new PrismaNeon(pool as any)
 
+        // We pass the connectionString BOTH to the pool and explicitly to the client
+        // This prevents the "localhost" fallback in some versions of Prisma/Next-Auth
         const client = new PrismaClient({
             adapter,
-            log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error']
         })
 
-        console.log("[Prisma Debug] Prisma Client created successfully.")
+        console.log("[Prisma Debug] Prisma Client successfully bound to Neon.")
         return client
     } catch (err) {
         console.error("[Prisma Debug] FATAL ERROR during initialization:", err)
