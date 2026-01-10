@@ -38,7 +38,31 @@ export function ReelsBar() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [active, setActive] = useState<ReelItem | null>(null);
+  const [progress, setProgress] = useState(0);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  const next = () => {
+    if (!active || items.length === 0) return;
+    const idx = items.findIndex((it) => it.name === active.name);
+    if (idx < items.length - 1) {
+      setActive(items[idx + 1] || null);
+    } else {
+      setActive(items[0] || null);
+    }
+    setProgress(0);
+  };
+
+  const prev = () => {
+    if (!active || items.length === 0) return;
+    const idx = items.findIndex((it) => it.name === active.name);
+    if (idx > 0) {
+      setActive(items[idx - 1] || null);
+    } else {
+      setActive(items[items.length - 1] || null);
+    }
+    setProgress(0);
+  };
 
   async function refresh() {
     if (!backendBase) {
@@ -103,6 +127,26 @@ export function ReelsBar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (active && !isVideo(active.name)) {
+      setProgress(0);
+      const startTime = Date.now();
+      const duration = 10000; // 10s
+
+      const interval = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const p = Math.min((elapsed / duration) * 100, 100);
+        setProgress(p);
+        if (p >= 100) {
+          clearInterval(interval);
+          next();
+        }
+      }, 50);
+
+      return () => clearInterval(interval);
+    }
+  }, [active, items]);
+
   return (
     <section className="mx-auto w-full max-w-screen-2xl px-4 pt-4">
       <div className="flex items-center justify-between gap-3">
@@ -138,14 +182,17 @@ export function ReelsBar() {
         <div className="mt-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm">{error}</div>
       ) : null}
 
-      <div className="mt-4">
-        <div className="flex gap-3 overflow-x-auto pb-3">
+      <div className="mt-6">
+        <div className="flex gap-5 overflow-x-auto pb-4 no-scrollbar">
           {items.map((it) => (
             <button
               key={it.name}
               type="button"
-              onClick={() => setActive(it)}
-              className="group relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-2xl border hover:opacity-90"
+              onClick={() => {
+                setActive(it);
+                setProgress(0);
+              }}
+              className="group relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-full border-2 border-primary/20 hover:border-primary/50 transition-all hover:scale-105 active:scale-95"
               title={it.name}
             >
               {isVideo(it.name) ? (
@@ -178,35 +225,76 @@ export function ReelsBar() {
           onClick={() => setActive(null)}
         >
           <div
-            className="max-h-[85vh] w-full max-w-3xl overflow-hidden rounded-2xl bg-black"
+            className="relative max-h-[90vh] w-full max-w-lg overflow-hidden rounded-3xl bg-black shadow-2xl transition-all"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3 text-white">
-              <div className="truncate text-sm">{active.name}</div>
+            {/* Progress Bars */}
+            <div className="absolute top-0 left-0 right-0 z-[60] flex gap-1 p-2">
+              {items.map((it, idx) => {
+                const currentIdx = items.findIndex(a => a?.name === active?.name);
+                let p = 0;
+                if (idx < currentIdx) p = 100;
+                else if (idx === currentIdx) p = progress;
+
+                return (
+                  <div key={it.name} className="h-1 flex-1 overflow-hidden rounded-full bg-white/20">
+                    <div
+                      className="h-full bg-white transition-all duration-100 ease-linear"
+                      style={{ width: `${p}%` }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+            <div className="absolute top-4 left-0 right-0 z-50 flex items-center justify-between px-4 text-white">
               <div className="flex items-center gap-2">
-                <a
-                  href={active.url}
-                  className="rounded-full border border-white/20 px-3 py-1 text-xs hover:opacity-80"
-                  download
-                >
-                  Download
-                </a>
+                <div className="h-8 w-8 rounded-full border border-white/20 bg-white/10 p-1">
+                  <div className="h-full w-full rounded-full bg-primary" />
+                </div>
+                <div className="truncate text-xs font-medium shadow-sm">{active.name}</div>
+              </div>
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  className="rounded-full border border-white/20 px-3 py-1 text-xs hover:opacity-80"
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 backdrop-blur-md hover:bg-white/20"
                   onClick={() => setActive(null)}
                 >
-                  Close
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </button>
               </div>
             </div>
 
-            <div className="flex items-center justify-center bg-black">
+            <div className="relative flex min-h-[60vh] items-center justify-center bg-black">
+              {/* Navigation overlay */}
+              <div className="absolute inset-0 z-10 flex">
+                <div className="h-full w-1/3 cursor-pointer" onClick={prev} />
+                <div className="h-full w-1/3 cursor-pointer" onClick={() => {
+                  if (videoRef.current) {
+                    if (videoRef.current.paused) videoRef.current.play();
+                    else videoRef.current.pause();
+                  }
+                }} />
+                <div className="h-full w-1/3 cursor-pointer" onClick={next} />
+              </div>
+
               {isVideo(active.name) ? (
-                <video src={active.url} controls className="max-h-[75vh] w-full" />
+                <video
+                  ref={videoRef}
+                  src={active.url}
+                  autoPlay
+                  playsInline
+                  className="max-h-[90vh] w-full object-contain"
+                  onTimeUpdate={() => {
+                    if (videoRef.current) {
+                      const p = (videoRef.current.currentTime / videoRef.current.duration) * 100;
+                      setProgress(p);
+                    }
+                  }}
+                  onEnded={next}
+                />
               ) : (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={active.url} alt={active.name} className="max-h-[75vh] w-full object-contain" />
+                <img src={active.url} alt={active.name} className="max-h-[90vh] w-full object-contain" />
               )}
             </div>
           </div>

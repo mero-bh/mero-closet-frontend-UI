@@ -63,6 +63,13 @@ function assertAuthEnv(providersCount: number) {
 }
 
 const providers = buildProviders()
+console.log(`[Auth Debug] Initializing NextAuth with ${providers.length} providers.`)
+if (providers.length === 0) {
+  console.warn("[Auth Debug] No providers were initialized! Check AUTH_GOOGLE_ID/SECRET.")
+} else {
+  console.log(`[Auth Debug] Active providers: ${providers.map(p => p.id).join(", ")}`)
+}
+
 assertAuthEnv(providers.length)
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
