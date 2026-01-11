@@ -10,6 +10,11 @@ export type Edge<T> = {
 
 export type Cart = Omit<ShopifyCart, 'lines'> & {
   lines: CartItem[];
+  paymentSession?: {
+    provider_id: string;
+    data: any;
+  };
+  client_secret?: string; // Shortcut for Stripe
 };
 
 export type CartProduct = {

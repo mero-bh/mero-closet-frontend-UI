@@ -318,7 +318,9 @@ function mapCart(cart: any, currencyCode: string): Cart {
       totalTaxAmount: money(tax, cartCurrency)
     },
     lines,
-    totalQuantity
+    totalQuantity,
+    paymentSession: cart?.payment_session,
+    client_secret: cart?.payment_session?.data?.client_secret
   };
 }
 
@@ -412,7 +414,7 @@ export async function getCart(): Promise<Cart | undefined> {
     const data = await medusaFetch<{ cart: any }>(`/carts/${cartId}`, {
       query: {
         // Ask for rich cart data (works even if Medusa ignores unknown fields).
-        fields: '*items,*items.variant,*items.variant.product,*items.variant.options,*items.variant.prices,total,subtotal,tax_total,currency_code'
+        fields: '*items,*items.variant,*items.variant.product,*items.variant.options,*items.variant.prices,total,subtotal,tax_total,currency_code,payment_session'
       },
       tags: [TAGS.cart],
       cacheSeconds: 0
@@ -731,4 +733,31 @@ export async function getPages(): Promise<Page[]> {
 
 export async function revalidate(_req: NextRequest): Promise<NextResponse> {
   return (await import('next/server')).NextResponse.json({ status: 200, revalidated: true });
+}
+
+
+
+export async function initializePaymentSession(): Promise<Cart | undefined> {
+  const cartId = (await cookies()).get('cartId')?.value;
+  if (!cartId) return undefined;
+
+  try {
+    // 1. Create Payment Sessions
+    await medusaFetch<{ cart: any }>(`/carts/${cartId}/payment-sessions`, {
+      method: 'POST',
+      tags: [TAGS.cart]
+    });
+
+    // 2. Set Payment Session to Stripe
+    await medusaFetch<{ cart: any }>(`/carts/${cartId}/payment-session`, {
+      method: 'POST',
+      body: { provider_id: 'stripe' },
+      tags: [TAGS.cart]
+    });
+
+    return getCart();
+  } catch (e) {
+    console.error("Failed to init payment session", e);
+    return getCart();
+  }
 }
