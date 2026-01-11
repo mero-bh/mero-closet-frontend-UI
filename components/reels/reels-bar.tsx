@@ -104,7 +104,7 @@ export function ReelsBar() {
   }, [active, items]);
 
   return (
-    <section className="mx-auto w-full max-w-screen-2xl px-4 pt-4 mb-8">
+    <section className="mx-auto w-full max-w-screen-2xl px-7 pt-4 mb-12">
       <div className="flex items-center justify-between gap-3">
         <div>
           <div className="text-xl font-bold tracking-tight">Reels</div>
@@ -116,7 +116,7 @@ export function ReelsBar() {
       ) : null}
 
       <div className="mt-6">
-        <div className="flex gap-5 overflow-x-auto pb-4 no-scrollbar">
+        <div className="flex gap-7 overflow-x-auto border-b border-t border-f pb-8 no-scrollbar">
           {items.map((it) => (
             <button
               key={it.id}
