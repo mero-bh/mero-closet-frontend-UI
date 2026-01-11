@@ -116,7 +116,7 @@ export function ReelsBar() {
       ) : null}
 
       <div className="mt-6">
-        <div className="flex gap-7 overflow-x-auto border-b border-t border-f pb-8 no-scrollbar">
+        <div className="flex gap-7 overflow-x-auto border-b border-t border-primary/20 pb-8 no-scrollbar">
           {items.map((it) => (
             <button
               key={it.id}
