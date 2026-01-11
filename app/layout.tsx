@@ -2,19 +2,12 @@ import { CartProvider } from 'components/cart/cart-context';
 import { Navbar } from 'components/layout/navbar';
 import { WelcomeToast } from 'components/welcome-toast';
 import clsx from 'clsx';
-import localFont from 'next/font/local';
 import { getCart } from 'lib/shopify';
 import { ReactNode } from 'react';
 import { Toaster } from 'sonner';
 import './globals.css';
 import { baseUrl } from 'lib/utils';
 import { cookies } from 'next/headers';
-
-const googleSans = localFont({
-  src: '../public/Google_Sans_Flex/GoogleSansFlex-VariableFont_GRAD,ROND,opsz,slnt,wdth,wght.ttf',
-  variable: '--font-google-sans',
-  display: 'swap',
-});
 
 const { SITE_NAME } = process.env;
 
@@ -41,7 +34,7 @@ export default async function RootLayout({
   const isDark = theme === 'dark';
 
   return (
-    <html lang="en" className={clsx(googleSans.variable, { dark: isDark })} suppressHydrationWarning>
+    <html lang="en" className={clsx({ dark: isDark })} suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{

@@ -1,6 +1,7 @@
 /** @format */
 
 @import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Arsenal+SC:ital,wght@0,400;0,700;1,400;1,700&family=Google+Sans+Flex:opsz,wght@6..144,1..1000&family=Google+Sans:opsz,wght,GRAD@17..18,451,56&family=Scheherazade+New:wght@400;500;600;700&display=swap");
 
 @plugin "@tailwindcss/container-queries";
 @plugin "@tailwindcss/typography";
@@ -19,7 +20,11 @@
 
   html,
   body {
-    font-family: var(--font-google-sans), sans-serif;
+    font-family: "Google Sans", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 451;
+    font-style: normal;
+    font-variation-settings: "GRAD" 56;
   }
 
   .button {
