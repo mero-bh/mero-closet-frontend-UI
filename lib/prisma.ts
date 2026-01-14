@@ -31,6 +31,7 @@ export const prisma = (() => {
         // This prevents the "localhost" fallback in some versions of Prisma/Next-Auth
         const client = new PrismaClient({
             adapter,
+            datasourceUrl: connectionString, // FORCE the url here as a fallback
         })
 
         console.log("[Prisma Debug] Prisma Client successfully bound to Neon.")

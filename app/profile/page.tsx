@@ -1,109 +1,104 @@
-import { auth, signOut } from 'auth';
-import { redirect } from 'next/navigation';
-import Image from 'next/image';
-import Link from 'next/link';
-import { UserIcon, EnvelopeIcon, ShieldCheckIcon, ArrowLeftOnRectangleIcon } from '@heroicons/react/24/outline';
+import { auth, signOut } from "auth"
+import { redirect } from "next/navigation"
+import Image from "next/image"
+import Link from "next/link"
 
 export default async function ProfilePage() {
-    const session = await auth();
+    const session = await auth()
 
     if (!session?.user) {
-        redirect('/login');
+        redirect("/api/auth/signin")
     }
 
-    const { user } = session;
+    const user = session.user
 
     return (
-        <div className="flex min-h-[90vh] flex-col items-center justify-start px-4 py-12 md:py-20">
-            <div className="w-full max-w-2xl space-y-8">
-                {/* Header Section */}
-                <div className="flex flex-col items-center space-y-4 text-center">
-                    <div className="relative group">
-                        <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 opacity-25 blur transition duration-1000 group-hover:opacity-100 group-hover:duration-200" />
-                        <div className="relative h-32 w-32 overflow-hidden rounded-full border-4 border-white shadow-2xl dark:border-neutral-900">
-                            {user.image ? (
-                                <Image
-                                    src={user.image}
-                                    alt={user.name || 'User'}
-                                    fill
-                                    className="object-cover"
-                                />
-                            ) : (
-                                <div className="flex h-full w-full items-center justify-center bg-neutral-100 dark:bg-neutral-800">
-                                    <UserIcon className="h-16 w-16 text-neutral-400" />
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                    <div className="space-y-1">
-                        <h1 className="text-3xl font-black tracking-tight text-neutral-900 dark:text-white">
-                            {user.name}
-                        </h1>
-                        <p className="text-neutral-500 dark:text-neutral-400">Account Member</p>
-                    </div>
-                </div>
-
-                {/* Info Cards */}
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div className="rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
-                        <div className="flex items-center space-x-4">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400">
-                                <EnvelopeIcon className="h-6 w-6" />
-                            </div>
-                            <div>
-                                <p className="text-xs font-medium uppercase tracking-wider text-neutral-500">Email Address</p>
-                                <p className="font-semibold text-neutral-900 dark:text-white">{user.email}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
-                        <div className="flex items-center space-x-4">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400">
-                                <ShieldCheckIcon className="h-6 w-6" />
-                            </div>
-                            <div>
-                                <p className="text-xs font-medium uppercase tracking-wider text-neutral-500">Account Role</p>
-                                <p className="font-semibold text-neutral-900 dark:text-white capitalize">
-                                    {/* @ts-ignore */}
-                                    {user.role || 'User'}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Actions Section */}
-                <div className="flex flex-col gap-4 rounded-3xl border border-neutral-200 bg-white/50 p-4 backdrop-blur-md dark:border-neutral-800 dark:bg-neutral-900/50">
+        <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 pt-24 pb-12 px-4">
+            <div className="max-w-2xl mx-auto space-y-8">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                    <h1 className="text-3xl font-bold font-logo text-neutral-900 dark:text-white">my profile</h1>
                     <Link
                         href="/"
-                        className="flex items-center justify-between rounded-2xl p-4 transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                        className="text-sm text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white transition-colors"
                     >
-                        <span className="font-medium">Continue Shopping</span>
-                        <ArrowLeftOnRectangleIcon className="h-5 w-5 rotate-180" />
+                        ← Back to Store
                     </Link>
+                </div>
 
+                {/* Profile Card */}
+                <div className="bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl p-8 shadow-sm">
+                    <div className="flex flex-col md:flex-row items-center gap-8">
+                        {/* Avatar */}
+                        <div className="relative group">
+                            <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-neutral-100 dark:border-neutral-800 shadow-inner relative">
+                                {user.image ? (
+                                    <Image
+                                        src={user.image}
+                                        alt={user.name || "User"}
+                                        fill
+                                        className="object-cover"
+                                    />
+                                ) : (
+                                    <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-4xl text-white font-bold">
+                                        {user.name?.[0]?.toUpperCase() || "U"}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Info */}
+                        <div className="text-center md:text-left space-y-2 flex-1">
+                            <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">
+                                {user.name}
+                            </h2>
+                            <p className="text-neutral-500 dark:text-neutral-400 font-mono text-sm">
+                                {user.email}
+                            </p>
+                            <div className="pt-2">
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-500/10 text-green-600 text-xs font-medium border border-green-500/20">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                                    Active Account
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mt-8 pt-8 border-t border-neutral-200 dark:border-neutral-800 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800">
+                            <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-1">Customer ID</h3>
+                            <p className="text-xs text-neutral-500 font-mono truncate">
+                                {/* @ts-ignore */}
+                                {user.id}
+                            </p>
+                        </div>
+                        <div className="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800">
+                            <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-1">Role</h3>
+                            <p className="text-xs text-neutral-500 capitalize">
+                                {/* @ts-ignore */}
+                                {user.role || "Customer"}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex justify-end">
                     <form
                         action={async () => {
-                            'use server';
-                            await signOut({ redirectTo: '/' });
+                            "use server"
+                            await signOut({ redirectTo: "/" })
                         }}
                     >
                         <button
                             type="submit"
-                            className="flex w-full items-center justify-between rounded-2xl p-4 text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-900/10"
+                            className="px-6 py-2.5 rounded-full bg-red-600 hover:bg-red-700 text-white font-medium text-sm transition-colors shadow-lg shadow-red-600/20"
                         >
-                            <span className="font-medium">Sign Out</span>
-                            <ArrowLeftOnRectangleIcon className="h-5 w-5" />
+                            Sign Out
                         </button>
                     </form>
                 </div>
-
-                {/* Premium Footer Hint */}
-                <p className="text-center text-xs text-neutral-400">
-                    Mero Closet Premium Customer Portal &bull; Secured by Auth.js
-                </p>
             </div>
         </div>
-    );
+    )
 }
