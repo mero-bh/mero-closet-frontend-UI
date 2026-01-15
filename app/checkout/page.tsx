@@ -30,7 +30,7 @@ export default async function CheckoutPage() {
         <div className="w-full lg:w-2/5 order-1 lg:order-2 space-y-6">
 
           {/* Order Summary Card */}
-          <div className="bg-white p-6 rounded-3xl shadow-sm border border-neutral-100">
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-neutral-100 text-black">
             <h2 className="font-semibold text-lg mb-6">Your Order</h2>
 
             <div className="space-y-4 mb-6">
@@ -74,16 +74,16 @@ export default async function CheckoutPage() {
           </div>
 
           {/* Coupon Code */}
-          <div className="bg-white p-6 rounded-3xl shadow-sm border border-neutral-100">
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-neutral-100 text-black">
             <h3 className="font-medium mb-3">Have any Coupon Code?</h3>
             <div className="flex gap-2">
-              <input type="text" placeholder="Enter coupon code" className="flex-1 p-3 bg-white border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black/5 text-sm" />
+              <input type="text" placeholder="Enter coupon code" className="flex-1 p-3 bg-white border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black/5 text-sm text-black placeholder:text-neutral-400" />
               <button className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium text-sm hover:bg-blue-700 transition-colors">Apply</button>
             </div>
           </div>
 
           {/* Shipping Method */}
-          <div className="bg-white p-6 rounded-3xl shadow-sm border border-neutral-100">
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-neutral-100 text-black">
             <h3 className="font-medium mb-4">Shipping Method</h3>
             <div className="space-y-3">
               <label className="flex items-center gap-3 p-4 border border-blue-100 bg-blue-50/30 rounded-xl cursor-pointer">
@@ -101,7 +101,7 @@ export default async function CheckoutPage() {
           </div>
 
           {/* Payment Method */}
-          <div className="bg-white p-6 rounded-3xl shadow-sm border border-neutral-100">
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-neutral-100 text-black">
             <h3 className="font-medium mb-4">Payment Method</h3>
 
             <div className="space-y-4">
