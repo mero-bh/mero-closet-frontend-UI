@@ -44,7 +44,17 @@ export default async function Footer() {
             &copy; {copyrightDate} {copyrightName}
             {copyrightName.length && !copyrightName.endsWith('.') ? '.' : ''} All rights reserved.
           </p>
-          <p className="md:ml-auto">
+          <div className="flex items-center gap-4 md:ml-auto md:mr-6">
+            <span className="text-neutral-500">We Accept:</span>
+            <div className="flex items-center gap-3">
+              <img src="/payment/payment-01.svg" alt="Visa" className="h-6 w-auto" />
+              <img src="/payment/payment-02.svg" alt="PayPal" className="h-6 w-auto" />
+              <img src="/payment/payment-03.svg" alt="Mastercard" className="h-6 w-auto" />
+              <img src="/payment/payment-04.svg" alt="Apple Pay" className="h-6 w-auto" />
+              <img src="/payment/payment-05.svg" alt="Google Pay" className="h-6 w-auto" />
+            </div>
+          </div>
+          <p>
             <a href="https://github.com/msr7799" className="text-black dark:text-foreground">
               Created by ▲ Mohamed Alromaihi
             </a>
