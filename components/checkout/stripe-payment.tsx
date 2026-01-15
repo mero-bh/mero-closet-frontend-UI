@@ -47,19 +47,19 @@ function CheckoutForm({ clientSecret }: { clientSecret: string }) {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6">
-            <PaymentElement id="payment-element" />
+        <form onSubmit={handleSubmit} className="space-y-4">
+            <PaymentElement id="payment-element" options={{ layout: 'tabs' }} />
             <button
                 disabled={isLoading || !stripe || !elements}
                 id="submit"
-                className="w-full bg-black text-white py-3 rounded-full font-semibold hover:bg-neutral-800 disabled:opacity-50 transition-all"
+                className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700 disabled:opacity-50 transition-all shadow-lg shadow-blue-600/20"
             >
                 <span id="button-text">
-                    {isLoading ? "Processing..." : "Pay now"}
+                    {isLoading ? "Processing..." : "Pay Now"}
                 </span>
             </button>
             {/* Show any error or success messages */}
-            {message && <div id="payment-message" className="text-red-500 text-sm mt-2 text-center">{message}</div>}
+            {message && <div id="payment-message" className="text-red-500 text-sm mt-2 text-center bg-red-50 p-2 rounded">{message}</div>}
         </form>
     );
 }
@@ -78,8 +78,7 @@ export default function StripePayment({ clientSecret }: { clientSecret: string }
     };
 
     return (
-        <div className="w-full mt-6 p-6 border rounded-2xl bg-white shadow-sm">
-            <h2 className="text-xl font-semibold mb-4">Payment Method</h2>
+        <div className="w-full">
             <Elements options={options} stripe={stripePromise}>
                 <CheckoutForm clientSecret={clientSecret} />
             </Elements>
