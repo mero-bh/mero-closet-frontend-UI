@@ -17,7 +17,7 @@ export async function Carousel() {
       {carouselProducts.map((product, i) => (
         <li
           key={`${product.handle}${i}`}
-          className="relative aspect-square h-[30vh] max-h-[275px] w-2/3 max-w-[475px] flex-none snap-start md:w-1/3"
+          className="relative aspect-[9/16] h-[50vh] max-h-[500px] w-2/3 max-w-[300px] flex-none snap-start md:w-1/3"
         >
           <Link href={`/product/${product.handle}`} className="relative h-full w-full">
             <GridTileImage
