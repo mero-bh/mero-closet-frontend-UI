@@ -1,3 +1,6 @@
+// Force dynamic rendering to avoid Next.js cookie/header conflicts during prerender
+export const dynamic = 'force-dynamic';
+
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 

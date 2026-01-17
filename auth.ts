@@ -19,7 +19,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user?.id) {
         try {
           // This runs on server, so DB access is fine
-          await prisma.user.update({
+          // Use updateMany to safely update status without throwing P2025 if user not found yet
+          await prisma.user.updateMany({
             where: { id: user.id },
             data: { isOnline: true, lastSeen: new Date() },
           })

@@ -90,10 +90,16 @@ async function medusaFetch<T>(path: string, opts: MedusaFetchOptions = {}): Prom
     // IMPORTANT: Next.js 15 PPR and Streaming depend on specific errors
     // being thrown to bail out of static generation. We MUST not catch them.
     if (
-      error.digest === 'DYNAMIC_USAGE' ||
-      error.message?.includes('bail out of prerendering') ||
+      // Check for specific properties that indicate a Next.js internal error
+      // @ts-ignore
+      (error && typeof error === 'object' && error.digest === 'DYNAMIC_USAGE') ||
+      // Check message for bailing out
+      (error instanceof Error && error.message.includes('bail out of prerendering')) ||
+      // Check constructor names (fallback)
       error.constructor?.name === 'DynamicServerError' ||
-      error.constructor?.name === 'NextDynamicUsageError'
+      error.constructor?.name === 'NextDynamicUsageError' ||
+      // Also check if it's a redirect error (Next.js redirection throws an error)
+      (error && typeof error === 'object' && 'digest' in error && typeof error.digest === 'string' && error.digest.startsWith('NEXT_REDIRECT'))
     ) {
       throw error;
     }
