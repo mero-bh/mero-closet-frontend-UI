@@ -743,17 +743,25 @@ export async function initializePaymentSession(): Promise<Cart | undefined> {
 
   try {
     // 1. Create Payment Sessions
-    await medusaFetch<{ cart: any }>(`/carts/${cartId}/payment-sessions`, {
+    console.log("Creating payment sessions for cart:", cartId);
+    const sessionRes = await medusaFetch<{ cart: any }>(`/carts/${cartId}/payment-sessions`, {
       method: 'POST',
       tags: [TAGS.cart]
     });
+    console.log("Payment sessions created:", sessionRes?.cart?.payment_sessions?.map((ps: any) => ps.provider_id));
 
     // 2. Set Payment Session to Stripe
-    await medusaFetch<{ cart: any }>(`/carts/${cartId}/payment-session`, {
+    console.log("Setting payment session to pp_stripe_stripe for cart:", cartId);
+    const setSessionRes = await medusaFetch<{ cart: any }>(`/carts/${cartId}/payment-session`, {
       method: 'POST',
-      body: { provider_id: 'stripe' },
+      body: { provider_id: 'pp_stripe_stripe' },
       tags: [TAGS.cart]
     });
+    console.log("Payment session set result:", setSessionRes?.cart?.payment_session?.provider_id);
+
+    if (!setSessionRes?.cart?.payment_session?.data?.client_secret) {
+      console.error("WARNING: No client_secret found in payment session data!", setSessionRes?.cart?.payment_session);
+    }
 
     return getCart();
   } catch (e) {
