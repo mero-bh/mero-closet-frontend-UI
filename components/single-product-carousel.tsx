@@ -33,7 +33,7 @@ export function SingleProductCarousel({ products }: { products: any[] }) {
 
     return (
         <div
-            className="relative w-full overflow-hidden bg-neutral-50 dark:bg-neutral-900"
+            className="relative w-full overflow-hidden bg-muted/80"
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
             onTouchStart={() => setIsPaused(true)}
@@ -57,25 +57,25 @@ export function SingleProductCarousel({ products }: { products: any[] }) {
                 </div>
 
                 {/* Details Section */}
-                <div className="flex w-full flex-col justify-center text-center md:items-start md:text-left">
-                    <h2 className="mb-2 text-3xl font-bold tracking-tight text-neutral-900 dark:text-white md:text-5xl">
+                <div className="flex w-full flex-col justify-center text-center md:items-end md:text-right">
+                    <h2 className="mb-2 text-3xl font-bold tracking-tight text-foreground/50 md:text-5xl">
                         {product.title}
                     </h2>
 
-                    <div className="mb-6 text-xl font-semibold text-blue-600">
+                    <div className="mb-6 text-xl font-semibold !text-accent">
                         <Price
                             amount={product.priceRange.maxVariantPrice.amount}
                             currencyCode={product.priceRange.maxVariantPrice.currencyCode}
                         />
                     </div>
 
-                    <div className="prose prose-neutral dark:prose-invert mb-8 max-w-md line-clamp-4">
+                    <div className="prose prose-neutral dark:prose-invert mb-8 text-accent bg-muted/60 rounded-lg p-2 max-w-md line-clamp-4">
                         {product.description}
                     </div>
 
                     <Link
                         href={`/product/${product.handle}`}
-                        className="inline-flex items-center justify-center rounded-full bg-blue-600 px-8 py-3 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        className="inline-flex items-center justify-center rounded-full bg-accent px-8 py-3 text-md font-semibold text-black/80 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                     >
                         Shop Now
                     </Link>
