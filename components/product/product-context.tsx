@@ -17,11 +17,11 @@ type ProductContextType = {
 
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
 
-export function ProductProvider({ children }: { children: React.ReactNode }) {
+export function ProductProvider({ children, initialState }: { children: React.ReactNode, initialState?: ProductState }) {
   const searchParams = useSearchParams();
 
   const getInitialState = () => {
-    const params: ProductState = {};
+    const params: ProductState = initialState || {};
     for (const [key, value] of searchParams.entries()) {
       params[key] = value;
     }

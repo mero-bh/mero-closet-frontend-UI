@@ -14,36 +14,48 @@ export default function FlipCard({ product }: { product: Product }) {
     // Ensure we have a valid image URL
     const imageUrl = product.featuredImage?.url || '/placeholder.png';
 
+    // Determine default variant (first available or first one) to pre-select options
+    const defaultVariant = product.variants.find((v) => v.availableForSale) || product.variants[0];
+    const initialState: Record<string, string> = {};
+
+    if (defaultVariant) {
+        defaultVariant.selectedOptions.forEach((option) => {
+            initialState[option.name.toLowerCase()] = option.value;
+        });
+    }
+
     return (
-        <ProductProvider>
+        <ProductProvider initialState={initialState}>
             <div
                 className="group relative w-full overflow-hidden rounded-xl bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 transition-all duration-300 hover:shadow-lg dark:hover:shadow-neutral-800/50"
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
             >
-                {/* Image Container with Link */}
-                <Link href={`/product/${product.handle}`} className="block relative aspect-[3/4] overflow-hidden bg-neutral-100 dark:bg-neutral-800">
-                    <Image
-                        src={imageUrl}
-                        alt={product.title}
-                        fill
-                        className={`object-cover transition-transform duration-700 ease-out ${isHovered ? 'scale-110' : 'scale-100'}`}
-                        sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
-                    />
+                {/* Image Container */}
+                <div className="relative aspect-[3/4] overflow-hidden bg-neutral-100 dark:bg-neutral-800">
+                    <Link href={`/product/${product.handle}`} className="block h-full w-full">
+                        <Image
+                            src={imageUrl}
+                            alt={product.title}
+                            fill
+                            className={`object-cover transition-transform duration-700 ease-out ${isHovered ? 'scale-110' : 'scale-100'}`}
+                            sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
+                        />
 
-                    {/* Overlay Gradient (Subtle) */}
-                    <div className={`absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 transition-opacity duration-300 ${isHovered ? 'opacity-100' : ''}`} />
+                        {/* Overlay Gradient (Subtle) */}
+                        <div className={`absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 transition-opacity duration-300 ${isHovered ? 'opacity-100' : ''}`} />
+                    </Link>
 
                     {/* Quick Add Button (Desktop) */}
                     <div className="absolute bottom-4 left-4 right-4 translate-y-full transition-transform duration-300 ease-out group-hover:translate-y-0 hidden md:block z-10">
-                        <div className="w-full bg-white text-black font-semibold py-3 rounded-full shadow-xl flex items-center justify-center gap-2 hover:bg-neutral-100 transition-colors cursor-pointer" onClick={(e) => e.preventDefault()}>
+                        <div className="w-full bg-white text-black font-semibold py-3 rounded-full shadow-xl flex items-center justify-center gap-2 hover:bg-neutral-100 transition-colors cursor-pointer">
                             {/* We wrap AddToCart to style it or use it solely as logic container */}
                             <div className="w-full [&_button]:w-full [&_button]:flex [&_button]:justify-center [&_button]:items-center [&_button]:gap-2">
                                 <AddToCart product={product} />
                             </div>
                         </div>
                     </div>
-                </Link>
+                </div>
 
                 {/* Content Details */}
                 <div className="p-4">

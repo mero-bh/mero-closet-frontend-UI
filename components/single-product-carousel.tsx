@@ -33,7 +33,7 @@ export function SingleProductCarousel({ products }: { products: any[] }) {
 
     return (
         <div
-            className="relative w-full overflow-hidden bg-muted/80"
+            className="relative w-full overflow-hidden"
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
             onTouchStart={() => setIsPaused(true)}
@@ -57,25 +57,25 @@ export function SingleProductCarousel({ products }: { products: any[] }) {
                 </div>
 
                 {/* Details Section */}
-                <div className="flex w-full flex-col justify-center text-center md:items-end md:text-right">
-                    <h2 className="mb-2 text-3xl font-bold tracking-tight text-foreground/50 md:text-5xl">
+                <div className="flex w-full flex-col justify-center text-center bg-muted/30 rounded-full pt-30 pr-10 pb-10 pl-4 md:items-end md:text-right">
+                    <h2 className="mb-4 text-5xl font-bold tracking-tight text-foreground/70 md:text-6xl">
                         {product.title}
                     </h2>
 
-                    <div className="mb-6 text-xl font-semibold !text-accent">
+                    <div className="mb-6 text-2xl font-bold text-accent">
                         <Price
                             amount={product.priceRange.maxVariantPrice.amount}
                             currencyCode={product.priceRange.maxVariantPrice.currencyCode}
                         />
                     </div>
 
-                    <div className="prose prose-neutral dark:prose-invert mb-8 text-accent bg-muted/60 rounded-lg p-2 max-w-md line-clamp-4">
+                    <div className="prose prose-lg mb-8 text-foreground/70 line-clamp-4 max-w-lg">
                         {product.description}
                     </div>
 
                     <Link
                         href={`/product/${product.handle}`}
-                        className="inline-flex items-center justify-center rounded-full bg-accent px-8 py-3 text-md font-semibold text-black/80 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        className="inline-flex items-center justify-center rounded-full bg-white/80 backdrop-blur-sm text-black/70 border-1 border-black/60 px-8 py-3 text-md font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
                     >
                         Shop Now
                     </Link>
@@ -105,7 +105,7 @@ export function SingleProductCarousel({ products }: { products: any[] }) {
                     <button
                         key={idx}
                         onClick={() => setCurrentIndex(idx)}
-                        className={`h-2 w-2 rounded-full transition-all ${idx === currentindex ? 'bg-blue-600 w-4' : 'bg-neutral-300 dark:bg-neutral-600'
+                        className={`h-2 w-2 rounded-full transition-all ${idx === currentindex ? 'bg-accent w-4' : 'bg-neutral-300 dark:bg-neutral-600'
                             }`}
                         aria-label={`Go to slide ${idx + 1}`}
                     />
