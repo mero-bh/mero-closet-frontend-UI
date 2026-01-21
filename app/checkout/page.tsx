@@ -3,6 +3,9 @@ import StripePayment from 'components/checkout/stripe-payment';
 import CheckoutForm from 'components/checkout/checkout-form';
 import Image from 'next/image';
 
+// Force dynamic rendering - checkout uses cookies
+export const dynamic = 'force-dynamic';
+
 export default async function CheckoutPage() {
   const cart = await initializePaymentSession();
 

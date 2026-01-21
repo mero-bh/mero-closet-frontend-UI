@@ -755,6 +755,39 @@ export async function initializePaymentSession(): Promise<Cart | undefined> {
   if (!cartId) return undefined;
 
   try {
+    const region = await getDefaultRegion();
+
+    // 0. First, ensure cart has shipping address (required for payment in Medusa v2)
+    // Check if cart already has shipping address
+    const currentCart = await medusaFetch<{ cart: any }>(`/carts/${cartId}`, {
+      query: { fields: 'shipping_address,email' },
+      cacheSeconds: 0
+    });
+
+    // If no shipping address, add a default one for the Gulf region
+    if (!currentCart?.cart?.shipping_address?.country_code) {
+      console.log("[Stripe] Adding default shipping address for payment...");
+      try {
+        await medusaFetch<{ cart: any }>(`/carts/${cartId}`, {
+          method: 'POST',
+          body: {
+            shipping_address: {
+              first_name: "Guest",
+              last_name: "Customer",
+              address_1: "Checkout",
+              city: "Manama",
+              country_code: "bh", // Bahrain as default
+              postal_code: "00000"
+            },
+            email: currentCart?.cart?.email || "guest@merocloset.com"
+          },
+          cacheSeconds: 0
+        });
+      } catch (addrErr) {
+        console.warn("[Stripe] Could not set default address:", addrErr);
+      }
+    }
+
     // 1. Create Payment Sessions
     console.log("[Stripe] Creating payment sessions for cart:", cartId);
     const sessionRes = await medusaFetch<{ cart: any }>(`/carts/${cartId}/payment-sessions`, {
@@ -767,7 +800,9 @@ export async function initializePaymentSession(): Promise<Cart | undefined> {
     console.log("[Stripe] Available payment providers:", paymentSessions.map((ps: any) => ps.provider_id));
 
     if (paymentSessions.length === 0) {
-      console.error("[Stripe] ERROR: No payment providers available. Check backend Stripe configuration.");
+      console.error("[Stripe] ERROR: No payment providers available. Cart may need shipping address or Stripe is not configured in the region.");
+      // Try to debug: check what the cart looks like
+      console.log("[Stripe] Cart region:", sessionRes?.cart?.region_id);
       return getCart();
     }
 
@@ -792,7 +827,6 @@ export async function initializePaymentSession(): Promise<Cart | undefined> {
 
     if (!stripeSession) {
       console.error("[Stripe] ERROR: Stripe provider not found in payment sessions. Available:", paymentSessions.map((ps: any) => ps.provider_id));
-      // Return cart anyway - the UI will show "Loading payment..."
       return getCart();
     }
 

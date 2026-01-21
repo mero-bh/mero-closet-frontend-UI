@@ -1,13 +1,11 @@
 import { CartProvider } from 'components/cart/cart-context';
 import { Navbar } from 'components/layout/navbar';
 import { WelcomeToast } from 'components/welcome-toast';
-import clsx from 'clsx';
 import { getCart } from 'lib/shopify';
 import { ReactNode } from 'react';
 import { Toaster } from 'sonner';
 import './globals.css';
 import { baseUrl } from 'lib/utils';
-import { cookies } from 'next/headers';
 
 const { SITE_NAME } = process.env;
 
@@ -30,11 +28,10 @@ export default async function RootLayout({
 }) {
   // Don't await the fetch, pass the Promise to the context provider
   const cart = getCart();
-  const theme = (await cookies()).get('theme')?.value;
-  const isDark = theme === 'dark';
+  // Theme is handled client-side via the script below - no server cookies needed
 
   return (
-    <html lang="en" className={clsx({ dark: isDark })} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{

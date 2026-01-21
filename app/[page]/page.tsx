@@ -4,6 +4,9 @@ import Prose from 'components/prose';
 import { getPage } from 'lib/shopify';
 import { notFound } from 'next/navigation';
 
+// Force dynamic rendering to avoid PPR issues with cookies
+export const dynamic = 'force-dynamic';
+
 export async function generateMetadata(props: {
   params: Promise<{ page: string }>;
 }): Promise<Metadata> {
