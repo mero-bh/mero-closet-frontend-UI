@@ -92,10 +92,16 @@ export default async function ProductPage(props: { params: Promise<{ handle: str
               }
             >
               <Gallery
-                images={product.images.slice(0, 5).map((image: Image) => ({
-                  src: image.url,
-                  altText: image.altText
-                }))}
+                images={product.images.length > 0
+                  ? product.images.slice(0, 5).map((image: Image) => ({
+                    src: image.url,
+                    altText: image.altText
+                  }))
+                  : [{
+                    src: '/placeholder-landscape.png',
+                    altText: product.title
+                  }]
+                }
               />
             </Suspense>
           </div>
