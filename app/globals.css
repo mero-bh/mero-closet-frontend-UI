@@ -58,11 +58,11 @@
   .dark {
     --background: oklch(0.15 0 0);
     --foreground: #ffffff;
-    --accent: oklch(0.85 0.1 330);
+    --accent: oklch(70.163% 0.18953 23.307);
     --selection: rgba(255, 255, 255, 0.311);
-    --border-hover: oklch(0.8 0.1 330);
+    --border-hover: oklch(78.108% 0.1278 20.341);
     --muted: #5f5f5f3f;
-    --primary: oklch(0.7 0.15 330);
+    --primary: oklch(67.204% 0.11016 20.348);
     --primary-hover: oklch(0.4 0.2 330);
 
     /* Spotlight Gradients - Dark Mode (Light) */
