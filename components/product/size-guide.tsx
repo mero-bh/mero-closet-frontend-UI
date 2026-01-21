@@ -71,12 +71,11 @@ export default function SizeGuide({ isOpen, onClose }: SizeGuideProps) {
 
                     {/* Image Placeholder */}
                     <div className="relative flex-1 min-h-[250px] sm:min-h-[350px] bg-neutral-50 rounded-xl overflow-hidden flex items-center justify-center border border-neutral-100">
-                        {/* In a real app, this would be different images based on activeTab */}
                         <Image
-                            src="/placeholder-landscape.png"
-                            alt="Size Guide"
+                            src={`/tiler/${activeTab === 'abaya' ? '1' : activeTab === 'coat' ? '2' : '3'}.png`}
+                            alt={`${activeTab} Size Guide`}
                             fill
-                            className="object-contain p-4"
+                            className="object-contain p-4 mix-blend-multiply"
                         />
                     </div>
                 </div>
