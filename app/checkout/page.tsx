@@ -1,6 +1,7 @@
-import { initializePaymentSession } from 'lib/shopify';
 import CheckoutForm from 'components/checkout/checkout-form';
 import PaymentSelector from 'components/checkout/payment-selector';
+import UserMeasurementsDisplay from 'components/checkout/user-measurements-display';
+import { initializePaymentSession } from 'lib/shopify';
 import Image from 'next/image';
 
 // Force dynamic rendering - checkout uses cookies
@@ -35,6 +36,9 @@ export default async function CheckoutPage() {
           {/* Order Summary Card */}
           <div className="bg-white p-6 rounded-3xl shadow-sm border border-neutral-100 text-black">
             <h2 className="font-semibold text-lg mb-6">Your Order</h2>
+            <div className="mb-6">
+              <UserMeasurementsDisplay />
+            </div>
 
             <div className="space-y-4 mb-6">
               {cart.lines.map((line) => (

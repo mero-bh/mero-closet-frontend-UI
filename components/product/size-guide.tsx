@@ -1,190 +1,134 @@
 'use client';
 
-import { Dialog, Tab, Transition } from '@headlessui/react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
-import clsx from 'clsx';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X, Ruler } from 'lucide-react';
 import Image from 'next/image';
-import { Fragment, useEffect, useState } from 'react';
 
-export default function SizeGuide() {
-    const [isOpen, setIsOpen] = useState(false);
-    const [isDark, setIsDark] = useState(false);
-    const [measurements, setMeasurements] = useState({
-        length: '',
-        width: '',
-        sleeve: ''
-    });
+type SizeGuideProps = {
+    isOpen: boolean;
+    onClose: () => void;
+};
 
+type Measurements = {
+    length: string;
+    width: string;
+    sleeve: string;
+};
+
+export default function SizeGuide({ isOpen, onClose }: SizeGuideProps) {
+    const [activeTab, setActiveTab] = useState<'abaya' | 'coat' | 'casual'>('abaya');
+    const [measurements, setMeasurements] = useState<Measurements>({ length: '', width: '', sleeve: '' });
+    const [isSaved, setIsSaved] = useState(false);
+
+    // Load from local storage
     useEffect(() => {
-        // Check initial theme
-        const checkTheme = () => {
-            setIsDark(document.documentElement.classList.contains('dark'));
-        };
-        checkTheme();
-
-        // Observer for theme changes
-        const observer = new MutationObserver(checkTheme);
-        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-
-        // Load saved measurements
         const saved = localStorage.getItem('user_measurements');
         if (saved) {
             setMeasurements(JSON.parse(saved));
         }
-
-        return () => observer.disconnect();
     }, []);
 
-    const saveMeasurements = () => {
+    const handleSave = () => {
         localStorage.setItem('user_measurements', JSON.stringify(measurements));
-        alert('Measurements saved successfully!');
-        setIsOpen(false);
+        setIsSaved(true);
+        setTimeout(() => setIsSaved(false), 2000);
     };
 
-    const images = [
-        { name: 'Abaya Style', dark: '/tiler/1.png', light: '/tiler/1-light.png' },
-        { name: 'Coat Style', dark: '/tiler/2.png', light: '/tiler/2-light.png' },
-        { name: 'Casual Style', dark: '/tiler/3.png', light: '/tiler/3-light.png' }
-    ];
+    if (!isOpen) return null;
 
     return (
-        <>
-            <button
-                onClick={() => setIsOpen(true)}
-                className="mt-4 cursor-pointer flex w-full items-center justify-center rounded-full border border-neutral-200 bg-white/60 hover:bg-white/90 p-3 text-sm font-medium text-black transition-all  "
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-[#222] text-white rounded-3xl w-full max-w-4xl overflow-hidden shadow-2xl flex flex-col md:flex-row relative"
             >
-                <span>📏 Size Guide & My Measurements</span>
-            </button>
+                {/* Close Button */}
+                <button onClick={onClose} className="absolute top-4 right-4 z-10 p-2 hover:bg-white/10 rounded-full transition-colors font-bold text-black bg-white/50 md:text-white md:bg-transparent">
+                    <X size={24} />
+                </button>
 
-            <Transition show={isOpen} as={Fragment}>
-                <Dialog onClose={() => setIsOpen(false)} className="relative z-[100]">
-                    <Transition.Child
-                        as={Fragment}
-                        enter="ease-out duration-300"
-                        enterFrom="opacity-0"
-                        enterTo="opacity-100"
-                        leave="ease-in duration-200"
-                        leaveFrom="opacity-100"
-                        leaveTo="opacity-0"
-                    >
-                        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" aria-hidden="true" />
-                    </Transition.Child>
+                {/* Left Side: Guide Image */}
+                <div className="w-full md:w-3/5 bg-white text-black p-6 flex flex-col">
+                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                        Size Guide & Measurements <Ruler size={18} className="text-blue-500" />
+                    </h2>
 
-                    <div className="fixed inset-0 flex items-center justify-center p-4">
-                        <Transition.Child
-                            as={Fragment}
-                            enter="ease-out duration-300"
-                            enterFrom="opacity-0 scale-95"
-                            enterTo="opacity-100 scale-100"
-                            leave="ease-in duration-200"
-                            leaveFrom="opacity-100 scale-100"
-                            leaveTo="opacity-0 scale-95"
-                        >
-                            <Dialog.Panel className="w-full max-w-4xl overflow-hidden rounded-2xl bg-white p-6 shadow-xl dark:bg-neutral-900">
-                                <div className="flex items-center justify-between mb-4">
-                                    <Dialog.Title className="text-xl cursor-pointer font-medium text-black dark:text-white">
-                                        Size Guide & Measurements 🪡
-                                    </Dialog.Title>
-                                    <button onClick={() => setIsOpen(false)} className="text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200">
-                                        <XMarkIcon className="h-6 w-6" />
-                                    </button>
-                                </div>
-
-                                <div className="flex flex-col lg:flex-row gap-8">
-                                    {/* Image Tabs */}
-                                    <div className="flex-1">
-                                        <Tab.Group>
-                                            <Tab.List className="flex space-x-1 rounded-xl bg-neutral-100 p-1 dark:bg-neutral-800">
-                                                {images.map((img) => (
-                                                    <Tab
-                                                        key={img.name}
-                                                        className={({ selected }) =>
-                                                            clsx(
-                                                                'w-full rounded-lg py-2.5 text-sm font-medium leading-5 transition-all',
-                                                                'ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2',
-                                                                selected
-                                                                    ? 'bg-white text-black shadow dark:bg-neutral-700 dark:text-white'
-                                                                    : 'text-neutral-600 hover:bg-white/[0.12] hover:text-black dark:text-neutral-400 dark:hover:text-white'
-                                                            )
-                                                        }
-                                                    >
-                                                        {img.name}
-                                                    </Tab>
-                                                ))}
-                                            </Tab.List>
-                                            <Tab.Panels className="mt-4">
-                                                {images.map((img, idx) => (
-                                                    <Tab.Panel key={idx} className="rounded-md bg-neutral-50 p-2 dark:bg-neutral-800/50">
-                                                        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md">
-                                                            <Image
-                                                                src={isDark ? img.dark : img.light}
-                                                                alt={img.name}
-                                                                fill
-                                                                className="object-contain"
-                                                            />
-                                                        </div>
-                                                    </Tab.Panel>
-                                                ))}
-                                            </Tab.Panels>
-                                        </Tab.Group>
-                                    </div>
-
-                                    {/* Measurement Form */}
-                                    <div className="w-full lg:w-80 flex-none space-y-6">
-                                        <div className="rounded-xl bg-neutral-50 p-6 dark:bg-neutral-800">
-                                            <h3 className="mb-4 text-lg font-medium text-black dark:text-white">Your Measurements</h3>
-                                            <div className="space-y-4">
-                                                <div>
-                                                    <label className="mb-1 block text-sm text-neutral-600 dark:text-neutral-300">
-                                                        Length (cm/inch)
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        value={measurements.length}
-                                                        onChange={(e) => setMeasurements({ ...measurements, length: e.target.value })}
-                                                        className="w-full rounded-lg border border-neutral-200 bg-white px-4 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
-                                                        placeholder="e.g. 52"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="mb-1 block text-sm text-neutral-600 dark:text-neutral-300">
-                                                        Width (cm/inch)
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        value={measurements.width}
-                                                        onChange={(e) => setMeasurements({ ...measurements, width: e.target.value })}
-                                                        className="w-full rounded-lg border border-neutral-200 bg-white px-4 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
-                                                        placeholder="e.g. 22"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="mb-1 block text-sm text-neutral-600 dark:text-neutral-300">
-                                                        Sleeve (cm/inch)
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        value={measurements.sleeve}
-                                                        onChange={(e) => setMeasurements({ ...measurements, sleeve: e.target.value })}
-                                                        className="w-full rounded-lg border border-neutral-200 bg-white px-4 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
-                                                        placeholder="e.g. 26"
-                                                    />
-                                                </div>
-                                            </div>
-                                            <button
-                                                onClick={saveMeasurements}
-                                                className="mt-6 w-full rounded-full bg-blue-600 py-3 text-sm font-medium text-white transition-opacity hover:opacity-90 active:scale-95"
-                                            >
-                                                Save Measurements
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </Dialog.Panel>
-                        </Transition.Child>
+                    {/* Tabs */}
+                    <div className="flex bg-neutral-100 rounded-lg p-1 mb-6 w-fit">
+                        {(['abaya', 'coat', 'casual'] as const).map((tab) => (
+                            <button
+                                key={tab}
+                                onClick={() => setActiveTab(tab)}
+                                className={`px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all ${activeTab === tab ? 'bg-white shadow-sm text-black' : 'text-neutral-500 hover:text-black'}`}
+                            >
+                                {tab.charAt(0).toUpperCase() + tab.slice(1)} Style
+                            </button>
+                        ))}
                     </div>
-                </Dialog>
-            </Transition>
-        </>
+
+                    {/* Image Placeholder */}
+                    <div className="relative flex-1 min-h-[250px] sm:min-h-[350px] bg-neutral-50 rounded-xl overflow-hidden flex items-center justify-center border border-neutral-100">
+                        {/* In a real app, this would be different images based on activeTab */}
+                        <Image
+                            src="/placeholder-landscape.png"
+                            alt="Size Guide"
+                            fill
+                            className="object-contain p-4"
+                        />
+                    </div>
+                </div>
+
+                {/* Right Side: User Measurements Form */}
+                <div className="w-full md:w-2/5 p-6 md:p-8 bg-[#1a1a1a] flex flex-col justify-center">
+                    <h3 className="text-xl font-semibold mb-2">Your Measurements</h3>
+                    <p className="text-neutral-400 text-sm mb-8">
+                        Enter your measurements here. We'll save them for your future orders so you get the perfect fit every time.
+                    </p>
+
+                    <div className="space-y-5">
+                        <div>
+                            <label className="block text-xs font-medium text-neutral-400 mb-1">Length (cm/inch)</label>
+                            <input
+                                type="text"
+                                value={measurements.length}
+                                onChange={(e) => setMeasurements({ ...measurements, length: e.target.value })}
+                                placeholder="e.g. 52"
+                                className="w-full bg-[#333] border border-transparent focus:border-blue-500 rounded-lg px-4 py-3 text-white placeholder-neutral-500 outline-none transition-all"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-medium text-neutral-400 mb-1">Width (cm/inch)</label>
+                            <input
+                                type="text"
+                                value={measurements.width}
+                                onChange={(e) => setMeasurements({ ...measurements, width: e.target.value })}
+                                placeholder="e.g. 22"
+                                className="w-full bg-[#333] border border-transparent focus:border-blue-500 rounded-lg px-4 py-3 text-white placeholder-neutral-500 outline-none transition-all"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-medium text-neutral-400 mb-1">Sleeve (cm/inch)</label>
+                            <input
+                                type="text"
+                                value={measurements.sleeve}
+                                onChange={(e) => setMeasurements({ ...measurements, sleeve: e.target.value })}
+                                placeholder="e.g. 26"
+                                className="w-full bg-[#333] border border-transparent focus:border-blue-500 rounded-lg px-4 py-3 text-white placeholder-neutral-500 outline-none transition-all"
+                            />
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={handleSave}
+                        className={`mt-8 w-full py-4 rounded-xl font-bold transition-all shadow-lg ${isSaved ? 'bg-green-500 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-900/20'}`}
+                    >
+                        {isSaved ? 'Measurements Saved!' : 'Save Measurements'}
+                    </button>
+                </div>
+            </motion.div>
+        </div>
     );
 }
