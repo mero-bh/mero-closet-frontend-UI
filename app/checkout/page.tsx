@@ -1,6 +1,6 @@
 import { initializePaymentSession } from 'lib/shopify';
-import StripePayment from 'components/checkout/stripe-payment';
 import CheckoutForm from 'components/checkout/checkout-form';
+import PaymentSelector from 'components/checkout/payment-selector';
 import Image from 'next/image';
 
 // Force dynamic rendering - checkout uses cookies
@@ -106,46 +106,7 @@ export default async function CheckoutPage() {
           {/* Payment Method */}
           <div className="bg-white p-6 rounded-3xl shadow-sm border border-neutral-100 text-black">
             <h3 className="font-medium mb-4">Payment Method</h3>
-
-            <div className="space-y-4">
-              {/* Stripe / Cards */}
-              <div className="p-4 border border-blue-100 bg-blue-50/10 rounded-xl">
-                <label className="flex items-center gap-3 mb-4 cursor-pointer">
-                  <input type="radio" name="payment" defaultChecked className="text-blue-600 focus:ring-blue-500" />
-                  <span className="font-medium">Credit Card / Wallet</span>
-                  <div className="ml-auto flex gap-2">
-                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">Stripe</span>
-                  </div>
-                </label>
-
-                {cart.client_secret ? (
-                  <div className="pl-6">
-                    <StripePayment clientSecret={cart.client_secret} />
-                  </div>
-                ) : (
-                  <div className="pl-6 space-y-2">
-                    <div className="flex items-center gap-2 text-yellow-600">
-                      <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      <span className="text-sm">Initializing secure payment...</span>
-                    </div>
-                    <p className="text-xs text-neutral-500">
-                      If this takes too long, please refresh the page or contact support.
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Cash on Delivery */}
-              <div className="p-4 border border-neutral-100 rounded-xl opacity-60">
-                <label className="flex items-center gap-3 cursor-not-allowed">
-                  <input type="radio" name="payment" disabled className="text-blue-600 focus:ring-blue-500" />
-                  <span className="font-medium">Cash on Delivery</span>
-                </label>
-              </div>
-            </div>
+            <PaymentSelector cart={cart} />
           </div>
 
         </div>

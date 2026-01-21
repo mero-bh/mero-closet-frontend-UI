@@ -327,7 +327,8 @@ function mapCart(cart: any, currencyCode: string): Cart {
     totalQuantity,
     paymentSession: cart?.payment_session || cart?.payment_collection?.payment_sessions?.[0],
     // Medusa v2: client_secret is in payment_collection.payment_sessions[0].data.client_secret
-    client_secret: cart?.payment_collection?.payment_sessions?.[0]?.data?.client_secret || cart?.payment_session?.data?.client_secret
+    client_secret: cart?.payment_collection?.payment_sessions?.[0]?.data?.client_secret || cart?.payment_session?.data?.client_secret,
+    shipping_address: cart?.shipping_address
   };
 }
 

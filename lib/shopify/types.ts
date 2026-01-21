@@ -15,6 +15,9 @@ export type Cart = Omit<ShopifyCart, 'lines'> & {
     data: any;
   };
   client_secret?: string; // Shortcut for Stripe
+  shipping_address?: {
+    country_code: string;
+  };
 };
 
 export type CartProduct = {
