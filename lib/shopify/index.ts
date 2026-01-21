@@ -325,8 +325,9 @@ function mapCart(cart: any, currencyCode: string): Cart {
     },
     lines,
     totalQuantity,
-    paymentSession: cart?.payment_session,
-    client_secret: cart?.payment_session?.data?.client_secret
+    paymentSession: cart?.payment_session || cart?.payment_collection?.payment_sessions?.[0],
+    // Medusa v2: client_secret is in payment_collection.payment_sessions[0].data.client_secret
+    client_secret: cart?.payment_collection?.payment_sessions?.[0]?.data?.client_secret || cart?.payment_session?.data?.client_secret
   };
 }
 
@@ -419,8 +420,8 @@ export async function getCart(): Promise<Cart | undefined> {
     const region = await getDefaultRegion();
     const data = await medusaFetch<{ cart: any }>(`/carts/${cartId}`, {
       query: {
-        // Ask for rich cart data (works even if Medusa ignores unknown fields).
-        fields: '*items,*items.variant,*items.variant.product,*items.variant.options,*items.variant.prices,total,subtotal,tax_total,currency_code,payment_session'
+        // Medusa v2: request payment_collection instead of payment_session
+        fields: '*items,*items.variant,*items.variant.product,*items.variant.options,*items.variant.prices,*payment_collection,*payment_collection.payment_sessions,total,subtotal,tax_total,currency_code'
       },
       tags: [TAGS.cart],
       cacheSeconds: 0
@@ -755,103 +756,93 @@ export async function initializePaymentSession(): Promise<Cart | undefined> {
   if (!cartId) return undefined;
 
   try {
-    const region = await getDefaultRegion();
+    console.log("[Payment] Initializing payment for cart:", cartId);
 
-    // 0. First, ensure cart has shipping address (required for payment in Medusa v2)
-    // Check if cart already has shipping address
-    const currentCart = await medusaFetch<{ cart: any }>(`/carts/${cartId}`, {
-      query: { fields: 'shipping_address,email' },
+    // 1. Get current cart to check payment_collection
+    const cartRes = await medusaFetch<{ cart: any }>(`/carts/${cartId}`, {
+      query: { fields: '*payment_collection,*payment_collection.payment_sessions,region_id,email,shipping_address' },
       cacheSeconds: 0
     });
 
-    // If no shipping address, add a default one for the Gulf region
-    if (!currentCart?.cart?.shipping_address?.country_code) {
-      console.log("[Stripe] Adding default shipping address for payment...");
-      try {
-        await medusaFetch<{ cart: any }>(`/carts/${cartId}`, {
-          method: 'POST',
-          body: {
-            shipping_address: {
-              first_name: "Guest",
-              last_name: "Customer",
-              address_1: "Checkout",
-              city: "Manama",
-              country_code: "bh", // Bahrain as default
-              postal_code: "00000"
-            },
-            email: currentCart?.cart?.email || "guest@merocloset.com"
-          },
-          cacheSeconds: 0
-        });
-      } catch (addrErr) {
-        console.warn("[Stripe] Could not set default address:", addrErr);
-      }
-    }
-
-    // 1. Create Payment Sessions
-    console.log("[Stripe] Creating payment sessions for cart:", cartId);
-    const sessionRes = await medusaFetch<{ cart: any }>(`/carts/${cartId}/payment-sessions`, {
-      method: 'POST',
-      tags: [TAGS.cart],
-      cacheSeconds: 0
-    });
-
-    const paymentSessions = sessionRes?.cart?.payment_sessions || [];
-    console.log("[Stripe] Available payment providers:", paymentSessions.map((ps: any) => ps.provider_id));
-
-    if (paymentSessions.length === 0) {
-      console.error("[Stripe] ERROR: No payment providers available. Cart may need shipping address or Stripe is not configured in the region.");
-      // Try to debug: check what the cart looks like
-      console.log("[Stripe] Cart region:", sessionRes?.cart?.region_id);
+    const cart = cartRes?.cart;
+    if (!cart) {
+      console.error("[Payment] Cart not found");
       return getCart();
     }
 
-    // 2. Find Stripe provider - try multiple possible IDs
-    const stripeProviderIds = ['pp_stripe_stripe', 'stripe', 'pp_stripe'];
-    let stripeSession = null;
+    console.log("[Payment] Cart region:", cart.region_id);
 
-    for (const providerId of stripeProviderIds) {
-      stripeSession = paymentSessions.find((ps: any) => ps.provider_id === providerId);
-      if (stripeSession) {
-        console.log("[Stripe] Found Stripe provider with ID:", providerId);
-        break;
-      }
-    }
-
-    // If no exact match, use any provider that contains 'stripe'
-    if (!stripeSession) {
-      stripeSession = paymentSessions.find((ps: any) =>
-        (ps.provider_id || '').toLowerCase().includes('stripe')
-      );
-    }
-
-    if (!stripeSession) {
-      console.error("[Stripe] ERROR: Stripe provider not found in payment sessions. Available:", paymentSessions.map((ps: any) => ps.provider_id));
-      return getCart();
-    }
-
-    const stripeProviderId = stripeSession.provider_id;
-    console.log("[Stripe] Setting payment session to:", stripeProviderId);
-
-    // 3. Set Payment Session to Stripe
-    const setSessionRes = await medusaFetch<{ cart: any }>(`/carts/${cartId}/payment-session`, {
-      method: 'POST',
-      body: { provider_id: stripeProviderId },
-      tags: [TAGS.cart],
+    // 2. Get available payment providers for this region
+    const providersRes = await medusaFetch<{ payment_providers: any[] }>(`/payment-providers`, {
+      query: { region_id: cart.region_id },
       cacheSeconds: 0
     });
 
-    const clientSecret = setSessionRes?.cart?.payment_session?.data?.client_secret;
+    const providers = providersRes?.payment_providers || [];
+    console.log("[Payment] Available providers:", providers.map((p: any) => p.id));
+
+    if (providers.length === 0) {
+      console.error("[Payment] ERROR: No payment providers for region:", cart.region_id);
+      return getCart();
+    }
+
+    // 3. Find Stripe provider
+    const stripeProvider = providers.find((p: any) =>
+      p.id === 'pp_stripe_stripe' || p.id === 'stripe' || (p.id || '').toLowerCase().includes('stripe')
+    );
+
+    if (!stripeProvider) {
+      console.error("[Payment] Stripe not found. Available:", providers.map((p: any) => p.id));
+      return getCart();
+    }
+
+    console.log("[Payment] Using provider:", stripeProvider.id);
+
+    // 4. Create or get payment collection
+    let paymentCollectionId = cart.payment_collection?.id;
+
+    if (!paymentCollectionId) {
+      console.log("[Payment] Creating payment collection...");
+      const pcRes = await medusaFetch<{ payment_collection: any }>(`/payment-collections`, {
+        method: 'POST',
+        body: { cart_id: cartId },
+        cacheSeconds: 0
+      });
+      paymentCollectionId = pcRes?.payment_collection?.id;
+      console.log("[Payment] Created payment collection:", paymentCollectionId);
+    } else {
+      console.log("[Payment] Using existing payment collection:", paymentCollectionId);
+    }
+
+    if (!paymentCollectionId) {
+      console.error("[Payment] Failed to create/get payment collection");
+      return getCart();
+    }
+
+    // 5. Initialize payment session with Stripe
+    console.log("[Payment] Initializing payment session with:", stripeProvider.id);
+    const sessionRes = await medusaFetch<{ payment_collection: any }>(
+      `/payment-collections/${paymentCollectionId}/payment-sessions`,
+      {
+        method: 'POST',
+        body: { provider_id: stripeProvider.id },
+        cacheSeconds: 0
+      }
+    );
+
+    const paymentSession = sessionRes?.payment_collection?.payment_sessions?.[0];
+    const clientSecret = paymentSession?.data?.client_secret;
 
     if (clientSecret) {
-      console.log("[Stripe] SUCCESS: client_secret obtained");
+      console.log("[Payment] SUCCESS: client_secret obtained");
     } else {
-      console.error("[Stripe] WARNING: No client_secret in response. Payment session data:", JSON.stringify(setSessionRes?.cart?.payment_session?.data || {}));
+      console.log("[Payment] Payment session created but no client_secret yet");
+      console.log("[Payment] Session data:", JSON.stringify(paymentSession?.data || {}));
     }
 
     return getCart();
   } catch (e: any) {
-    console.error("[Stripe] Failed to init payment session:", e?.message || e);
+    console.error("[Payment] Failed to init payment session:", e?.message || e);
     return getCart();
   }
 }
