@@ -44,7 +44,7 @@ export default async function Footer() {
             &copy; {copyrightDate} {copyrightName}
             {copyrightName.length && !copyrightName.endsWith('.') ? '.' : ''} All rights reserved.
           </p>
-          <div className="flex items-center gap-4 md:ml-auto md:mr-6">
+          <div className="flex items-center bg-muted/80 rounded-lg py-2 px-4 gap-4 md:ml-auto md:mr-6">
             <span className="text-neutral-500">We Accept:</span>
             <div className="flex items-center gap-3">
               <img src="/payment/payment-01.svg" alt="Visa" className="h-6 w-auto" />
@@ -54,11 +54,7 @@ export default async function Footer() {
               <img src="/payment/payment-05.svg" alt="Google Pay" className="h-6 w-auto" />
             </div>
           </div>
-          <p>
-            <a href="https://github.com/msr7799" className="text-black dark:text-foreground">
-              Created by ▲ Mohamed Alromaihi
-            </a>
-          </p>
+        
         </div>
       </div>
     </footer>

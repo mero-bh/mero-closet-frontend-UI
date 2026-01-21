@@ -710,7 +710,14 @@ const PAGES: Page[] = [
     id: 'about',
     title: 'About Mero Closet',
     handle: 'about',
-    body: `<p><strong>Mero Closet</strong> — Gulf luxury abayas, mokhawir, and curated looks.</p><p>Quality fabrics, clean tailoring, and modern details.</p>`,
+    body: `<p><strong>Mero Closet</strong> — Gulf luxury abayas, mokhawir, and curated looks.</p>
+    <p>Quality fabrics, clean tailoring, and modern details.</p>
+    <br/>
+    <p>
+      <a href="https://github.com/msr7799" class="text-black dark:text-foreground">
+        Created by ▲ Mohamed Alromaihi
+      </a>
+    </p>`,
     bodySummary: 'Gulf luxury abayas, mokhawir, and curated looks.',
     seo: { title: 'About Mero Closet', description: 'Gulf luxury abayas and mokhawir.' },
     createdAt: new Date().toISOString(),
@@ -749,29 +756,68 @@ export async function initializePaymentSession(): Promise<Cart | undefined> {
 
   try {
     // 1. Create Payment Sessions
-    console.log("Creating payment sessions for cart:", cartId);
+    console.log("[Stripe] Creating payment sessions for cart:", cartId);
     const sessionRes = await medusaFetch<{ cart: any }>(`/carts/${cartId}/payment-sessions`, {
       method: 'POST',
-      tags: [TAGS.cart]
+      tags: [TAGS.cart],
+      cacheSeconds: 0
     });
-    console.log("Payment sessions created:", sessionRes?.cart?.payment_sessions?.map((ps: any) => ps.provider_id));
 
-    // 2. Set Payment Session to Stripe
-    console.log("Setting payment session to pp_stripe_stripe for cart:", cartId);
+    const paymentSessions = sessionRes?.cart?.payment_sessions || [];
+    console.log("[Stripe] Available payment providers:", paymentSessions.map((ps: any) => ps.provider_id));
+
+    if (paymentSessions.length === 0) {
+      console.error("[Stripe] ERROR: No payment providers available. Check backend Stripe configuration.");
+      return getCart();
+    }
+
+    // 2. Find Stripe provider - try multiple possible IDs
+    const stripeProviderIds = ['pp_stripe_stripe', 'stripe', 'pp_stripe'];
+    let stripeSession = null;
+
+    for (const providerId of stripeProviderIds) {
+      stripeSession = paymentSessions.find((ps: any) => ps.provider_id === providerId);
+      if (stripeSession) {
+        console.log("[Stripe] Found Stripe provider with ID:", providerId);
+        break;
+      }
+    }
+
+    // If no exact match, use any provider that contains 'stripe'
+    if (!stripeSession) {
+      stripeSession = paymentSessions.find((ps: any) =>
+        (ps.provider_id || '').toLowerCase().includes('stripe')
+      );
+    }
+
+    if (!stripeSession) {
+      console.error("[Stripe] ERROR: Stripe provider not found in payment sessions. Available:", paymentSessions.map((ps: any) => ps.provider_id));
+      // Return cart anyway - the UI will show "Loading payment..."
+      return getCart();
+    }
+
+    const stripeProviderId = stripeSession.provider_id;
+    console.log("[Stripe] Setting payment session to:", stripeProviderId);
+
+    // 3. Set Payment Session to Stripe
     const setSessionRes = await medusaFetch<{ cart: any }>(`/carts/${cartId}/payment-session`, {
       method: 'POST',
-      body: { provider_id: 'pp_stripe_stripe' },
-      tags: [TAGS.cart]
+      body: { provider_id: stripeProviderId },
+      tags: [TAGS.cart],
+      cacheSeconds: 0
     });
-    console.log("Payment session set result:", setSessionRes?.cart?.payment_session?.provider_id);
 
-    if (!setSessionRes?.cart?.payment_session?.data?.client_secret) {
-      console.error("WARNING: No client_secret found in payment session data!", setSessionRes?.cart?.payment_session);
+    const clientSecret = setSessionRes?.cart?.payment_session?.data?.client_secret;
+
+    if (clientSecret) {
+      console.log("[Stripe] SUCCESS: client_secret obtained");
+    } else {
+      console.error("[Stripe] WARNING: No client_secret in response. Payment session data:", JSON.stringify(setSessionRes?.cart?.payment_session?.data || {}));
     }
 
     return getCart();
-  } catch (e) {
-    console.error("Failed to init payment session", e);
+  } catch (e: any) {
+    console.error("[Stripe] Failed to init payment session:", e?.message || e);
     return getCart();
   }
 }
