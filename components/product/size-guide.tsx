@@ -43,21 +43,21 @@ export default function SizeGuide({ isOpen, onClose }: SizeGuideProps) {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-[#222] text-white rounded-3xl w-full max-w-4xl overflow-hidden shadow-2xl flex flex-col md:flex-row relative"
+                className="bg-[#222] text-white rounded-3xl w-full max-w-4xl shadow-2xl flex flex-col md:flex-row relative max-h-[85vh] overflow-y-auto md:overflow-hidden md:max-h-none"
             >
                 {/* Close Button */}
-                <button onClick={onClose} className="absolute top-4 right-4 z-10 p-2 hover:bg-white/10 rounded-full transition-colors font-bold text-black bg-white/50 md:text-white md:bg-transparent">
+                <button onClick={onClose} className="absolute top-3 right-3 md:top-4 md:right-4 z-10 p-2 hover:bg-white/10 rounded-full transition-colors font-bold text-black bg-white/50 md:text-white md:bg-transparent">
                     <X size={24} />
                 </button>
 
                 {/* Left Side: Guide Image */}
-                <div className="w-full md:w-3/5 bg-white text-black p-6 flex flex-col">
+                <div className="w-full md:w-3/5 bg-white text-black p-5 md:p-6 flex flex-col">
                     <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                         Size Guide & Measurements <Ruler size={18} className="text-blue-500" />
                     </h2>
 
                     {/* Tabs */}
-                    <div className="flex bg-neutral-100 rounded-lg p-1 mb-6 w-fit">
+                    <div className="flex flex-wrap bg-neutral-100 rounded-lg p-1 mb-6 w-full sm:w-fit">
                         {(['abaya', 'coat', 'casual'] as const).map((tab) => (
                             <button
                                 key={tab}
@@ -70,7 +70,7 @@ export default function SizeGuide({ isOpen, onClose }: SizeGuideProps) {
                     </div>
 
                     {/* Image Placeholder */}
-                    <div className="relative flex-1 min-h-[250px] sm:min-h-[350px] bg-neutral-50 rounded-xl overflow-hidden flex items-center justify-center border border-neutral-100">
+                    <div className="relative flex-1 min-h-[200px] sm:min-h-[350px] bg-neutral-50 rounded-xl overflow-hidden flex items-center justify-center border border-neutral-100">
                         <Image
                             src={`/tiler/${activeTab === 'abaya' ? '1' : activeTab === 'coat' ? '2' : '3'}.png`}
                             alt={`${activeTab} Size Guide`}
@@ -81,7 +81,7 @@ export default function SizeGuide({ isOpen, onClose }: SizeGuideProps) {
                 </div>
 
                 {/* Right Side: User Measurements Form */}
-                <div className="w-full md:w-2/5 p-6 md:p-8 bg-[#1a1a1a] flex flex-col justify-center">
+                <div className="w-full md:w-2/5 p-5 md:p-8 bg-[#1a1a1a] flex flex-col justify-center">
                     <h3 className="text-xl font-semibold mb-2">Your Measurements</h3>
                     <p className="text-neutral-400 text-sm mb-8">
                         Enter your measurements here. We'll save them for your future orders so you get the perfect fit every time.
